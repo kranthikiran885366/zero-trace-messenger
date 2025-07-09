@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import Navigation from '@/components/Navigation';
 import heroImage from '@/assets/hero-image.jpg';
 
 const Index = () => {
@@ -69,6 +70,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Navigation />
       {/* Hero Section */}
       <section className="relative overflow-hidden cyber-grid">
         <div className="absolute inset-0 bg-gradient-to-br from-cyber-darker via-background to-cyber-dark opacity-90" />
