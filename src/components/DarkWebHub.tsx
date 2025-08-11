@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Shield, Globe, Eye, EyeOff, Zap, Lock, Skull, Terminal, Wifi, WifiOff, Layers, Key, Bitcoin, Package, Users, MessageCircle, Search, Filter, Star, AlertTriangle, Clock, MapPin, Activity, Cpu, HardDrive, Network, Signal, Radar, Router, MonitorSpeaker } from 'lucide-react';
+import { Shield, Globe, Eye, EyeOff, Zap, Lock, Skull, Terminal, Wifi, WifiOff, Layers, Key, Bitcoin, Package, Users, MessageCircle, Search, Filter, Star, AlertTriangle, Clock, MapPin, Activity, Cpu, HardDrive, Network, Signal, Radar, Router, MonitorSpeaker, ArrowLeft, Home, Settings, Power, RefreshCw, Download, Upload, Trash2, Save, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -303,6 +303,81 @@ const DarkWebHub = () => {
       )}
 
       <div className="max-w-7xl mx-auto space-y-8 relative z-20">
+
+        {/* Navigation Header with Back Button */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => navigate('/')}
+              className="bg-red-900/20 border-red-500/50 hover:bg-red-800/30 hover:border-red-400/70 text-red-400 hover:text-red-300 transition-all duration-300 shadow-lg shadow-red-500/20"
+            >
+              <ArrowLeft className="h-5 w-5 mr-2" />
+              EXIT UNDERGROUND
+            </Button>
+
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => navigate('/')}
+              className="bg-cyan-900/20 border-cyan-500/50 hover:bg-cyan-800/30 hover:border-cyan-400/70 text-cyan-400 hover:text-cyan-300 transition-all duration-300 shadow-lg shadow-cyan-500/20"
+            >
+              <Home className="h-5 w-5 mr-2" />
+              SECURE HOME
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setMatrixActive(!matrixActive);
+                toast({
+                  title: `Matrix Effect ${matrixActive ? 'Disabled' : 'Enabled'}`,
+                  description: `Background effects ${matrixActive ? 'turned off' : 'activated'}`
+                });
+              }}
+              className="bg-green-900/20 border-green-500/50 hover:bg-green-800/30 text-green-400"
+            >
+              <Eye className="h-4 w-4 mr-1" />
+              MATRIX
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setOnionRouting(false);
+                setMeshConnections(0);
+                setTerminalLines([]);
+                toast({
+                  title: "⚠️ Emergency Protocol",
+                  description: "All connections terminated. System cleared.",
+                  variant: "destructive"
+                });
+              }}
+              className="bg-red-900/20 border-red-500/50 hover:bg-red-800/30 text-red-400"
+            >
+              <Power className="h-4 w-4 mr-1" />
+              KILL SWITCH
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setActiveTab('hub');
+                window.location.reload();
+              }}
+              className="bg-purple-900/20 border-purple-500/50 hover:bg-purple-800/30 text-purple-400"
+            >
+              <RefreshCw className="h-4 w-4 mr-1" />
+              REFRESH
+            </Button>
+          </div>
+        </div>
         {/* Header */}
         <Card className="bg-gradient-to-r from-red-900/20 to-purple-900/20 border-red-500/30 backdrop-blur-sm relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
@@ -641,39 +716,168 @@ const DarkWebHub = () => {
               </Card>
             </div>
 
-            {/* Additional Quick Actions */}
+            {/* Enhanced Quick Actions with Buttons */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-              <Card className="bg-gradient-to-br from-cyan-900/20 to-black/50 border-cyan-500/30 hover:border-cyan-400/50 transition-all duration-300 cursor-pointer group">
+              <Card
+                className="bg-gradient-to-br from-cyan-900/20 to-black/50 border-cyan-500/30 hover:border-cyan-400/50 transition-all duration-300 cursor-pointer group"
+                onClick={() => setActiveTab('mesh')}
+              >
                 <CardContent className="p-4 text-center">
                   <Wifi className="h-8 w-8 mx-auto text-cyan-400 mb-2 group-hover:animate-pulse" />
                   <div className="text-sm font-semibold text-cyan-400">MESH NETWORK</div>
                   <div className="text-xs text-cyan-300/70 mt-1">{meshConnections} nodes</div>
+                  <Button
+                    size="sm"
+                    className="mt-2 w-full bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border-cyan-500/50"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveTab('mesh');
+                    }}
+                  >
+                    CONNECT
+                  </Button>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-yellow-900/20 to-black/50 border-yellow-500/30 hover:border-yellow-400/50 transition-all duration-300 cursor-pointer group">
+              <Card
+                className="bg-gradient-to-br from-yellow-900/20 to-black/50 border-yellow-500/30 hover:border-yellow-400/50 transition-all duration-300 cursor-pointer group"
+                onClick={() => setActiveTab('crypto')}
+              >
                 <CardContent className="p-4 text-center">
                   <Bitcoin className="h-8 w-8 mx-auto text-yellow-400 mb-2 group-hover:animate-bounce" />
                   <div className="text-sm font-semibold text-yellow-400">CRYPTO MIXER</div>
                   <div className="text-xs text-yellow-300/70 mt-1">Anonymous</div>
+                  <Button
+                    size="sm"
+                    className="mt-2 w-full bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 border-yellow-500/50"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveTab('crypto');
+                    }}
+                  >
+                    MIX COINS
+                  </Button>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-indigo-900/20 to-black/50 border-indigo-500/30 hover:border-indigo-400/50 transition-all duration-300 cursor-pointer group">
+              <Card
+                className="bg-gradient-to-br from-indigo-900/20 to-black/50 border-indigo-500/30 hover:border-indigo-400/50 transition-all duration-300 cursor-pointer group"
+                onClick={() => setActiveTab('stego')}
+              >
                 <CardContent className="p-4 text-center">
                   <Eye className="h-8 w-8 mx-auto text-indigo-400 mb-2 group-hover:animate-pulse" />
                   <div className="text-sm font-semibold text-indigo-400">STEGANOGRAPHY</div>
                   <div className="text-xs text-indigo-300/70 mt-1">Hide data</div>
+                  <Button
+                    size="sm"
+                    className="mt-2 w-full bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 border-indigo-500/50"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveTab('stego');
+                    }}
+                  >
+                    HIDE DATA
+                  </Button>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-orange-900/20 to-black/50 border-orange-500/30 hover:border-orange-400/50 transition-all duration-300 cursor-pointer group">
+              <Card
+                className="bg-gradient-to-br from-orange-900/20 to-black/50 border-orange-500/30 hover:border-orange-400/50 transition-all duration-300 cursor-pointer group"
+                onClick={() => setActiveTab('terminal')}
+              >
                 <CardContent className="p-4 text-center">
                   <Terminal className="h-8 w-8 mx-auto text-orange-400 mb-2 group-hover:animate-pulse" />
                   <div className="text-sm font-semibold text-orange-400">TERMINAL</div>
                   <div className="text-xs text-orange-300/70 mt-1">Command line</div>
+                  <Button
+                    size="sm"
+                    className="mt-2 w-full bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 border-orange-500/50"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveTab('terminal');
+                    }}
+                  >
+                    ACCESS
+                  </Button>
                 </CardContent>
               </Card>
+            </div>
+
+            {/* Action Buttons Row */}
+            <div className="flex flex-wrap justify-center gap-4 mt-8 p-4 bg-gradient-to-r from-gray-900/20 to-black/40 rounded-lg border border-gray-500/20">
+              <Button
+                variant="outline"
+                onClick={() => setActiveTab('marketplace')}
+                className="bg-purple-900/20 border-purple-500/50 hover:bg-purple-800/30 text-purple-400"
+              >
+                <Package className="h-4 w-4 mr-2" />
+                ACCESS MARKET
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => setActiveTab('deaddrops')}
+                className="bg-green-900/20 border-green-500/50 hover:bg-green-800/30 text-green-400"
+              >
+                <MapPin className="h-4 w-4 mr-2" />
+                CREATE DROP
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => setActiveTab('onion')}
+                className="bg-red-900/20 border-red-500/50 hover:bg-red-800/30 text-red-400"
+              >
+                <Globe className="h-4 w-4 mr-2" />
+                ONION ROUTING
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const data = {
+                    onionRouting,
+                    meshConnections,
+                    systemStats,
+                    timestamp: new Date().toISOString()
+                  };
+                  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'underground-session.json';
+                  a.click();
+                  toast({
+                    title: "📱 Session Exported",
+                    description: "Underground session data has been encrypted and downloaded"
+                  });
+                }}
+                className="bg-blue-900/20 border-blue-500/50 hover:bg-blue-800/30 text-blue-400"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                EXPORT SESSION
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (window.confirm('⚠️ This will wipe all session data. Continue?')) {
+                    setOnionRouting(false);
+                    setMeshConnections(0);
+                    setTerminalLines([]);
+                    setSystemStats({ cpu: 0, ram: 0, network: 0, encrypted: 0 });
+                    toast({
+                      title: "🗑️ Data Wiped",
+                      description: "All session data has been securely deleted",
+                      variant: "destructive"
+                    });
+                  }
+                }}
+                className="bg-red-900/20 border-red-500/50 hover:bg-red-800/30 text-red-400"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                WIPE DATA
+              </Button>
             </div>
           </TabsContent>
 
@@ -732,7 +936,18 @@ const DarkWebHub = () => {
                     <Bitcoin className="h-5 w-5 text-orange-500" />
                     Underground Marketplace
                   </CardTitle>
-                  <Badge variant="destructive">⚠️ Use at your own risk</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="destructive">⚠️ Use at your own risk</Badge>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setActiveTab('hub')}
+                      className="bg-gray-900/20 border-gray-500/50 hover:bg-gray-800/30"
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-1" />
+                      Back to Hub
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -765,7 +980,7 @@ const DarkWebHub = () => {
                           <div className="flex-1">
                             <h3 className="font-semibold text-lg">{listing.title}</h3>
                             <p className="text-sm text-muted-foreground mb-2">{listing.category}</p>
-                            <div className="flex items-center gap-4 text-sm">
+                            <div className="flex items-center gap-4 text-sm mb-3">
                               <span className="flex items-center gap-1">
                                 <Users className="h-3 w-3" />
                                 {listing.vendor}
@@ -776,6 +991,31 @@ const DarkWebHub = () => {
                               </span>
                               <span>{listing.views} views</span>
                               <span>{listing.sales} sales</span>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                className="bg-orange-600/80 hover:bg-orange-500/90 text-orange-100"
+                                onClick={() => toast({
+                                  title: "🛒 Item Added to Cart",
+                                  description: `${listing.title} - Secure checkout initiated`
+                                })}
+                              >
+                                <Package className="h-3 w-3 mr-1" />
+                                BUY NOW
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-orange-500/50 text-orange-400 hover:bg-orange-500/20"
+                                onClick={() => toast({
+                                  title: "💬 Vendor Contact",
+                                  description: "Encrypted message channel opened"
+                                })}
+                              >
+                                <MessageCircle className="h-3 w-3 mr-1" />
+                                CONTACT
+                              </Button>
                             </div>
                           </div>
                           <div className="text-right">
@@ -802,13 +1042,36 @@ const DarkWebHub = () => {
           <TabsContent value="deaddrops" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-green-500" />
-                  Physical Dead Drops
-                </CardTitle>
-                <CardDescription>
-                  Secure physical message drops in real locations
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <MapPin className="h-5 w-5 text-green-500" />
+                      Physical Dead Drops
+                    </CardTitle>
+                    <CardDescription>
+                      Secure physical message drops in real locations
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="bg-green-600/80 hover:bg-green-500/90 text-green-100"
+                      onClick={createDeadDrop}
+                    >
+                      <MapPin className="h-4 w-4 mr-1" />
+                      NEW DROP
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setActiveTab('hub')}
+                      className="bg-gray-900/20 border-gray-500/50 hover:bg-gray-800/30"
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-1" />
+                      Back
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -830,9 +1093,35 @@ const DarkWebHub = () => {
                                 {Math.floor((drop.expiresAt - Date.now()) / 3600000)}h left
                               </span>
                             </div>
-                            <Badge variant={drop.retrieved ? "secondary" : "destructive"}>
-                              {drop.retrieved ? 'Retrieved' : 'Active'}
-                            </Badge>
+                            <div className="space-y-2">
+                              <Badge variant={drop.retrieved ? "secondary" : "destructive"}>
+                                {drop.retrieved ? 'Retrieved' : 'Active'}
+                              </Badge>
+                              <div className="flex gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="bg-green-500/20 border-green-500/50 text-green-400 hover:bg-green-500/30"
+                                  onClick={() => toast({
+                                    title: "📍 Location Verified",
+                                    description: "GPS coordinates confirmed and encrypted"
+                                  })}
+                                >
+                                  VERIFY
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="bg-blue-500/20 border-blue-500/50 text-blue-400 hover:bg-blue-500/30"
+                                  onClick={() => toast({
+                                    title: "📱 Message Retrieved",
+                                    description: "Encrypted payload downloaded securely"
+                                  })}
+                                >
+                                  RETRIEVE
+                                </Button>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </CardContent>
@@ -847,10 +1136,37 @@ const DarkWebHub = () => {
           <TabsContent value="mesh" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Wifi className="h-5 w-5 text-blue-500" />
-                  Decentralized Mesh Network
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Wifi className="h-5 w-5 text-blue-500" />
+                    Decentralized Mesh Network
+                  </CardTitle>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="bg-blue-600/80 hover:bg-blue-500/90 text-blue-100"
+                      onClick={() => {
+                        setMeshConnections(prev => prev + Math.floor(Math.random() * 3) + 1);
+                        toast({
+                          title: "🔗 New Node Connected",
+                          description: "Mesh network expanded successfully"
+                        });
+                      }}
+                    >
+                      <Network className="h-4 w-4 mr-1" />
+                      CONNECT NODE
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setActiveTab('hub')}
+                      className="bg-gray-900/20 border-gray-500/50 hover:bg-gray-800/30"
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-1" />
+                      Back
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-8">
