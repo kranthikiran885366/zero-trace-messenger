@@ -15,6 +15,7 @@ const Navigation = () => {
     { href: '/create', label: 'Create Room' },
     { href: '/files', label: 'File Share' },
     { href: '/manage', label: 'Manage Rooms' },
+    { href: '/auth', label: 'Session' },
     { href: '/faq', label: 'FAQ' },
     { href: '/contact', label: 'Contact' },
   ];
@@ -48,6 +49,9 @@ const Navigation = () => {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/auth">Session</Link>
+            </Button>
             <Button variant="ghost" size="sm" asChild>
               <Link to="/join">Join Room</Link>
             </Button>
