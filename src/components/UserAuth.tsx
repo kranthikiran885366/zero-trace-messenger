@@ -1,5 +1,5 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
-import { User, Shield, Eye, EyeOff, Key, Fingerprint, Settings, LogOut } from 'lucide-react';
+import { User, Shield, Eye, EyeOff, Key, Fingerprint, Settings, LogOut, ArrowLeft, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { encryption } from '@/lib/encryption';
+import { useNavigate } from 'react-router-dom';
 
 interface UserSession {
   id: string;
@@ -131,6 +132,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 const UserAuth = () => {
   const { session, createSession, updateSession, clearSession } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isCreatingSession, setIsCreatingSession] = useState(!session);
   const [nickname, setNickname] = useState('');
   const [showSettings, setShowSettings] = useState(false);
@@ -224,6 +226,31 @@ const UserAuth = () => {
 
   return (
     <div className="min-h-screen bg-background p-4">
+      {/* Back Button Header */}
+      <div className="max-w-4xl mx-auto mb-6">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => navigate('/')}
+            className="bg-primary/10 border-primary/50 hover:bg-primary/20 hover:border-primary/70 text-primary transition-all duration-300 shadow-lg shadow-primary/20"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            BACK TO HOME
+          </Button>
+
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => navigate('/create')}
+            className="bg-accent/10 border-accent/50 hover:bg-accent/20 hover:border-accent/70 text-accent transition-all duration-300 shadow-lg shadow-accent/20"
+          >
+            <Shield className="h-5 w-5 mr-2" />
+            CREATE ROOM
+          </Button>
+        </div>
+      </div>
+
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <Card className="bg-card/80 backdrop-blur-sm border-primary/20">
