@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Shield, Menu, X, Zap, Lock, Activity, ChevronDown, User, Settings, LogOut } from 'lucide-react';
+import { Shield, Menu, X, Zap, Lock, Activity, ChevronDown, User, Settings, LogOut, Skull } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useState, useEffect } from 'react';
@@ -29,6 +29,7 @@ const Navigation = () => {
     { href: '/create', label: 'Create Room', icon: Zap },
     { href: '/files', label: 'File Share', icon: null },
     { href: '/manage', label: 'Manage Rooms', icon: Settings },
+    { href: '/underground', label: 'Underground', icon: Skull, special: true },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -70,8 +71,8 @@ const Navigation = () => {
                   to={item.href}
                   className={`relative px-4 py-2 text-sm font-medium transition-all duration-300 rounded-lg group ${
                     isActive(item.href)
-                      ? 'text-primary bg-primary/10'
-                      : 'text-muted-foreground hover:text-primary hover:bg-primary/5'
+                      ? item.special ? 'text-red-400 bg-red-500/10 border border-red-500/20' : 'text-primary bg-primary/10'
+                      : item.special ? 'text-red-500 hover:text-red-400 hover:bg-red-500/5' : 'text-muted-foreground hover:text-primary hover:bg-primary/5'
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -79,7 +80,9 @@ const Navigation = () => {
                     {item.label}
                   </div>
                   {isActive(item.href) && (
-                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full animate-pulse" />
+                    <div className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 rounded-full animate-pulse ${
+                      item.special ? 'bg-red-500' : 'bg-primary'
+                    }`} />
                   )}
                   <div className="absolute inset-0 rounded-lg bg-primary/5 scale-0 group-hover:scale-100 transition-transform duration-300 -z-10" />
                 </Link>

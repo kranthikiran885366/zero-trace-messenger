@@ -17,6 +17,7 @@ import VideoCall from "./pages/VideoCall";
 import FileShare from "./pages/FileShare";
 import RoomManager from "./pages/RoomManager";
 import UserAuth from "./pages/UserAuth";
+import DarkWebHub from "./pages/DarkWebHub";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from './components/UserAuth';
 
@@ -44,6 +45,7 @@ const App = () => (
           <Route path="/files" element={<FileShare />} />
           <Route path="/manage" element={<RoomManager />} />
           <Route path="/auth" element={<UserAuth />} />
+          <Route path="/underground" element={<DarkWebHub />} />
           <Route path="/room/:roomId" element={<Chat />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
