@@ -267,30 +267,98 @@ const ChatInterface = () => {
           messages.map((message) => (
             <div
               key={message.id}
-              className={`flex ${message.isOwn ? 'justify-end' : 'justify-start'} animate-fade-in-up`}
+              className={`flex ${isOwnMessage(message) ? 'justify-end' : 'justify-start'} animate-fade-in-up group`}
             >
               <div
-                className={`max-w-[70%] rounded-2xl px-4 py-3 ${
-                  message.isOwn
+                className={`max-w-[70%] rounded-2xl px-4 py-3 relative ${
+                  isOwnMessage(message)
                     ? 'bg-primary text-primary-foreground ml-12'
+                    : message.type === 'system'
+                    ? 'bg-accent/10 text-accent border border-accent/20 mx-12'
                     : 'bg-card text-card-foreground mr-12 border border-border'
                 }`}
               >
-                <p className="text-sm leading-relaxed">{message.content}</p>
-                <div className="flex items-center justify-between mt-2 text-xs opacity-70">
-                  <span>
-                    {new Date(message.timestamp).toLocaleTimeString([], { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })}
-                  </span>
-                  {message.timeRemaining && (
-                    <div className="flex items-center gap-1">
-                      <Timer className="h-3 w-3" />
-                      <span>{formatTimeRemaining(message.timeRemaining)}</span>
+                {/* Message Content */}
+                {message.type === 'file' ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      {message.metadata?.mimeType?.startsWith('image/') ? (
+                        <Image className="h-4 w-4" />
+                      ) : (
+                        <FileText className="h-4 w-4" />
+                      )}
+                      <span className="font-medium">{message.metadata?.filename}</span>
                     </div>
-                  )}
+                    {message.metadata?.fileSize && (
+                      <p className="text-xs opacity-70">
+                        Size: {formatFileSize(message.metadata.fileSize)}
+                      </p>
+                    )}
+                    <Button variant="ghost" size="sm" className="w-full">
+                      <Download className="h-3 w-3 mr-1" />
+                      Download
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                    {message.encrypted && message.encrypted !== message.content && (
+                      <div className="text-xs opacity-50 font-mono bg-black/20 px-2 py-1 rounded">
+                        🔒 Encrypted: {message.encrypted.slice(0, 32)}...
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Message Footer */}
+                <div className="flex items-center justify-between mt-2 text-xs opacity-70">
+                  <div className="flex items-center gap-2">
+                    <span>
+                      {new Date(message.timestamp).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
+                    {message.type !== 'system' && (
+                      <span className="opacity-50">
+                        {isOwnMessage(message) ? 'You' : `User ${message.senderId.slice(-4)}`}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {message.autoDeleteAfter && (
+                      <div className="flex items-center gap-1">
+                        <Timer className="h-3 w-3" />
+                        <span>{formatTimeRemaining(message.autoDeleteAfter)}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
+
+                {/* Message Actions */}
+                {message.type !== 'system' && (
+                  <div className="absolute -top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 bg-background border"
+                        onClick={() => copyMessageContent(message.content)}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                      {message.type === 'text' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 bg-background border"
+                        >
+                          <Eye className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ))
@@ -324,27 +392,72 @@ const ChatInterface = () => {
             </div>
 
             {/* Input */}
-            <div className="flex gap-2">
-              <Input
-                placeholder="Type a secure message..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                className="flex-1 bg-background/50 border-border focus:border-primary"
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <div className="flex-1 relative">
+                  <Textarea
+                    placeholder="Type a secure message..."
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                      }
+                    }}
+                    className="bg-background/50 border-border focus:border-primary resize-none min-h-[2.5rem] max-h-32"
+                    rows={1}
+                  />
+                  <div className="absolute right-2 top-2 flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={!isConnected}
+                    >
+                      <Paperclip className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0"
+                      onClick={startVoiceRecording}
+                      disabled={!isConnected || isRecording}
+                    >
+                      {isRecording ? <Zap className="h-3 w-3 text-red-500" /> : <Mic className="h-3 w-3" />}
+                    </Button>
+                  </div>
+                </div>
+                <Button
+                  onClick={sendMessage}
+                  disabled={!newMessage.trim() || !isConnected}
+                  variant="cyber"
+                  size="sm"
+                  className="px-4 self-end"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* File Input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                onChange={handleFileUpload}
+                className="hidden"
+                accept="*/*"
               />
-              <Button 
-                onClick={sendMessage} 
-                disabled={!newMessage.trim()}
-                variant="cyber"
-                size="sm"
-                className="px-4"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
             </div>
 
-            <div className="text-xs text-muted-foreground text-center">
-              🔒 Messages are end-to-end encrypted • 🌐 IP masked via Tor • 👤 No metadata logged
+            <div className="text-xs text-muted-foreground text-center space-y-1">
+              <p>🔒 AES-256 encryption • 🌐 IP masked via Tor • 👤 Anonymous identities</p>
+              {encryptionKey && (
+                <p className="font-mono">Fingerprint: {encryption.generateFingerprint(encryptionKey)}</p>
+              )}
+              {isRecording && (
+                <p className="text-red-500 animate-pulse">🎤 Recording voice note...</p>
+              )}
             </div>
           </div>
         </CardContent>
