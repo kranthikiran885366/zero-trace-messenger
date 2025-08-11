@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Timer, Video, Phone, Shield, Trash2, Settings, Paperclip, Mic, MicOff, Image, FileText, Download, Copy, Eye, Users, Lock, Zap } from 'lucide-react';
+import { Send, Timer, Video, Phone, Shield, Trash2, Settings, Paperclip, Mic, MicOff, Image, FileText, Download, Copy, Eye, Users, Lock, Zap, ArrowLeft, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { websocketService, type ChatMessage } from '@/lib/websocket';
 import { encryption } from '@/lib/encryption';
 
@@ -27,6 +27,7 @@ interface RoomUser {
 
 const ChatInterface = () => {
   const { roomId } = useParams();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -234,6 +235,19 @@ const ChatInterface = () => {
             </div>
 
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (window.confirm('⚠️ Are you sure you want to leave this secure room? All messages will be lost.')) {
+                    navigate('/');
+                  }
+                }}
+                className="bg-red-900/20 border-red-500/50 hover:bg-red-800/30 text-red-400"
+              >
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                LEAVE
+              </Button>
               <Button variant="ghost" size="sm" onClick={() => setShowUsers(!showUsers)}>
                 <Users className="h-4 w-4" />
                 <span className="ml-1 text-xs">{roomUsers.length}</span>
