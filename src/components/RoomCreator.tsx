@@ -255,7 +255,7 @@ const RoomCreator = () => {
                       <p className="text-sm font-medium">Enable Video Calls</p>
                       <p className="text-xs text-muted-foreground">Allow encrypted video/audio calls</p>
                     </div>
-                    <Switch 
+                    <Switch
                       checked={roomSettings.enableVideo}
                       onCheckedChange={(checked) => setRoomSettings(prev => ({ ...prev, enableVideo: checked }))}
                     />
@@ -266,12 +266,119 @@ const RoomCreator = () => {
                       <p className="text-sm font-medium">Enable File Sharing</p>
                       <p className="text-xs text-muted-foreground">Allow encrypted file transfers</p>
                     </div>
-                    <Switch 
+                    <Switch
                       checked={roomSettings.enableFileSharing}
                       onCheckedChange={(checked) => setRoomSettings(prev => ({ ...prev, enableFileSharing: checked }))}
                     />
                   </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">Screen Sharing</p>
+                      <p className="text-xs text-muted-foreground">Allow participants to share screens</p>
+                    </div>
+                    <Switch
+                      checked={roomSettings.enableScreenShare}
+                      onCheckedChange={(checked) => setRoomSettings(prev => ({ ...prev, enableScreenShare: checked }))}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">Anonymous Join</p>
+                      <p className="text-xs text-muted-foreground">Allow joining without nicknames</p>
+                    </div>
+                    <Switch
+                      checked={roomSettings.allowAnonymousJoin}
+                      onCheckedChange={(checked) => setRoomSettings(prev => ({ ...prev, allowAnonymousJoin: checked }))}
+                    />
+                  </div>
                 </div>
+
+                {/* Advanced Settings Toggle */}
+                <div className="pt-4 border-t border-border">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setAdvancedSettings(!advancedSettings)}
+                    className="w-full justify-between"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Settings className="h-4 w-4" />
+                      Advanced Settings
+                    </span>
+                    <span className="text-xs">{advancedSettings ? 'Hide' : 'Show'}</span>
+                  </Button>
+                </div>
+
+                {/* Advanced Settings */}
+                {advancedSettings && (
+                  <div className="space-y-4 pt-4 border-t border-border">
+                    {/* Max File Size */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Max File Size</label>
+                      <Select
+                        value={roomSettings.maxFileSize}
+                        onValueChange={(value) => setRoomSettings(prev => ({ ...prev, maxFileSize: value }))}
+                      >
+                        <SelectTrigger className="bg-background/50">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {fileSizeOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Room Theme */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Room Theme</label>
+                      <Select
+                        value={roomSettings.roomTheme}
+                        onValueChange={(value) => setRoomSettings(prev => ({ ...prev, roomTheme: value }))}
+                      >
+                        <SelectTrigger className="bg-background/50">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {themeOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Additional Features */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">Voice Notes</p>
+                          <p className="text-xs text-muted-foreground">Record and send voice messages</p>
+                        </div>
+                        <Switch
+                          checked={roomSettings.enableVoiceNotes}
+                          onCheckedChange={(checked) => setRoomSettings(prev => ({ ...prev, enableVoiceNotes: checked }))}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">Drawing Board</p>
+                          <p className="text-xs text-muted-foreground">Collaborative drawing canvas</p>
+                        </div>
+                        <Switch
+                          checked={roomSettings.enableDrawing}
+                          onCheckedChange={(checked) => setRoomSettings(prev => ({ ...prev, enableDrawing: checked }))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -325,9 +432,24 @@ const RoomCreator = () => {
                 </div>
 
                 <div className="pt-4 border-t border-border">
-                  <Button onClick={generateRoom} variant="cyber" className="w-full" size="lg">
-                    <Shield className="mr-2 h-5 w-5" />
-                    Create Secure Room
+                  <Button
+                    onClick={generateRoom}
+                    variant="cyber"
+                    className="w-full"
+                    size="lg"
+                    disabled={isGenerating}
+                  >
+                    {isGenerating ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
+                        Creating Room...
+                      </>
+                    ) : (
+                      <>
+                        <Shield className="mr-2 h-5 w-5" />
+                        Create Secure Room
+                      </>
+                    )}
                   </Button>
                 </div>
               </CardContent>
@@ -432,7 +554,7 @@ const RoomCreator = () => {
               </div>
 
               <div className="text-xs text-center text-muted-foreground">
-                🔒 This room uses military-grade encryption • 🌐 IP addresses are masked • 🚫 No data is logged
+                ��� This room uses military-grade encryption • 🌐 IP addresses are masked • 🚫 No data is logged
               </div>
             </CardContent>
           </Card>
