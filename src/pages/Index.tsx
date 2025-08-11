@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Shield, MessageSquare, Timer, Eye, EyeOff, Video, Lock, Zap, Globe, ArrowRight, Users, FileShare, Settings, Activity, Phone, Camera, Mic, Share2, Copy, Star, TrendingUp } from 'lucide-react';
+import { Shield, MessageSquare, Timer, Eye, EyeOff, Video, Lock, Zap, Globe, ArrowRight, Users, Share, Settings, Activity, Phone, Camera, Mic, Share2, Copy, Star, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -91,7 +91,7 @@ const Index = () => {
       action: () => navigate('/join')
     },
     {
-      icon: FileShare,
+      icon: Share,
       title: "Share Files",
       description: "Secure file transfer",
       color: "bg-neon-green/10 text-neon-green border-neon-green/20",
