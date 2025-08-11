@@ -178,13 +178,23 @@ const VideoCallInterface = () => {
                 </div>
 
                 <div className="space-y-3">
-                  <Button 
-                    onClick={startCall} 
-                    variant="cyber" 
+                  <Button
+                    onClick={startCall}
+                    variant="cyber"
                     className="w-full"
+                    disabled={isConnecting}
                   >
-                    <Phone className="mr-2 h-4 w-4" />
-                    Start Secure Call
+                    {isConnecting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
+                        Connecting...
+                      </>
+                    ) : (
+                      <>
+                        <Phone className="mr-2 h-4 w-4" />
+                        Start Secure Call
+                      </>
+                    )}
                   </Button>
                   
                   <div className="text-xs text-center text-muted-foreground space-y-1">
@@ -266,6 +276,7 @@ const VideoCallInterface = () => {
                 size="lg"
                 onClick={toggleAudio}
                 className="rounded-full p-4"
+                title={isAudioEnabled ? "Mute" : "Unmute"}
               >
                 {isAudioEnabled ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
               </Button>
@@ -275,8 +286,19 @@ const VideoCallInterface = () => {
                 size="lg"
                 onClick={toggleVideo}
                 className="rounded-full p-4"
+                title={isVideoEnabled ? "Turn off camera" : "Turn on camera"}
               >
                 {isVideoEnabled ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
+              </Button>
+
+              <Button
+                variant={isScreenSharing ? "neon" : "ghost"}
+                size="lg"
+                onClick={toggleScreenShare}
+                className="rounded-full p-4"
+                title={isScreenSharing ? "Stop sharing" : "Share screen"}
+              >
+                {isScreenSharing ? <ScreenShareOff className="h-5 w-5" /> : <ScreenShare className="h-5 w-5" />}
               </Button>
 
               <Button
@@ -284,6 +306,7 @@ const VideoCallInterface = () => {
                 size="lg"
                 onClick={endCall}
                 className="rounded-full p-4 bg-red-600 hover:bg-red-700"
+                title="End call"
               >
                 <PhoneOff className="h-5 w-5" />
               </Button>
@@ -291,14 +314,22 @@ const VideoCallInterface = () => {
               <Button
                 variant="ghost"
                 size="lg"
+                onClick={() => navigate(`/chat/${roomId}`)}
                 className="rounded-full p-4"
+                title="Open chat"
               >
-                <Settings className="h-5 w-5" />
+                <MessageSquare className="h-5 w-5" />
               </Button>
             </div>
 
-            <div className="text-xs text-center text-muted-foreground mt-3">
-              🔐 P2P encrypted • 🌐 {ipMasked ? 'IP masked via TURN relay' : 'Direct connection'} • 🚫 No recording
+            <div className="text-xs text-center text-muted-foreground mt-3 space-y-1">
+              <p>🔐 P2P encrypted • 🌐 {ipMasked ? 'IP masked via TURN relay' : 'Direct connection'} • 🚫 No recording</p>
+              {encryptionKey && (
+                <p className="font-mono">Fingerprint: {encryption.generateFingerprint(encryptionKey)}</p>
+              )}
+              {isScreenSharing && (
+                <p className="text-neon-blue animate-pulse">📺 Screen sharing active</p>
+              )}
             </div>
           </CardContent>
         </Card>
