@@ -14,6 +14,8 @@ import Contact from "./pages/Contact";
 import Terms from "./pages/Terms";
 import Chat from "./pages/Chat";
 import VideoCall from "./pages/VideoCall";
+import FileShare from "./pages/FileShare";
+import RoomManager from "./pages/RoomManager";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +38,9 @@ const App = () => (
           <Route path="/terms" element={<Terms />} />
           <Route path="/chat/:roomId?" element={<Chat />} />
           <Route path="/video/:roomId?" element={<VideoCall />} />
+          <Route path="/files" element={<FileShare />} />
+          <Route path="/manage" element={<RoomManager />} />
+          <Route path="/room/:roomId" element={<Chat />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

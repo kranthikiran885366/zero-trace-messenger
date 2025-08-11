@@ -13,6 +13,8 @@ const Navigation = () => {
     { href: '/features', label: 'Features' },
     { href: '/join', label: 'Join Room' },
     { href: '/create', label: 'Create Room' },
+    { href: '/files', label: 'File Share' },
+    { href: '/manage', label: 'Manage Rooms' },
     { href: '/faq', label: 'FAQ' },
     { href: '/contact', label: 'Contact' },
   ];
