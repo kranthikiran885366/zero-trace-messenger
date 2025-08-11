@@ -1,285 +1,394 @@
-import { Link, useLocation } from 'react-router-dom';
-import { Shield, Menu, X, Zap, Lock, Activity, ChevronDown, User, Settings, LogOut, Skull } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { 
+  Shield, 
+  Menu, 
+  X, 
+  Home, 
+  Settings, 
+  Users, 
+  MessageCircle, 
+  FileText, 
+  Lock, 
+  Globe, 
+  User, 
+  LogOut,
+  Bell,
+  Activity,
+  Eye,
+  EyeOff
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useState, useEffect } from 'react';
-import { useAuth } from './UserAuth';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger,
+  DropdownMenuLabel
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const Navigation = () => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
+  const navigate = useNavigate();
   const location = useLocation();
-  const { session } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
+  const { toast } = useToast();
+  
+  const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [notifications, setNotifications] = useState(0);
+  const [isStealthMode, setIsStealthMode] = useState(false);
 
-  // Handle scroll effect
+  // Handle scroll effects
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
+
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const navItems = [
-    { href: '/', label: 'Home', icon: null },
-    { href: '/how-it-works', label: 'How It Works', icon: null },
-    { href: '/features', label: 'Features', icon: null },
-    { href: '/join', label: 'Join Room', icon: Lock },
-    { href: '/create', label: 'Create Room', icon: Zap },
-    { href: '/files', label: 'File Share', icon: null },
-    { href: '/manage', label: 'Manage Rooms', icon: Settings },
-    { href: '/underground', label: 'Underground', icon: Skull, special: true },
+  // Load user preferences for stealth mode
+  useEffect(() => {
+    if (user?.preferences) {
+      setIsStealthMode(user.preferences.theme === 'stealth');
+    }
+  }, [user]);
+
+  // Mock notifications (in real app, this would come from WebSocket)
+  useEffect(() => {
+    if (isAuthenticated) {
+      const interval = setInterval(() => {
+        setNotifications(prev => Math.floor(Math.random() * 5));
+      }, 30000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated]);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast({
+        title: "Logged Out",
+        description: "You have been safely logged out",
+      });
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
+  const toggleStealth = () => {
+    setIsStealthMode(!isStealthMode);
+    toast({
+      title: isStealthMode ? "Stealth Mode Disabled" : "Stealth Mode Enabled",
+      description: isStealthMode 
+        ? "Normal interface restored" 
+        : "Interface disguised for privacy",
+    });
+  };
+
+  // Navigation items based on authentication status
+  const publicNavItems = [
+    { name: 'Home', href: '/', icon: Home },
+    { name: 'How It Works', href: '/how-it-works', icon: Settings },
+    { name: 'Features', href: '/features', icon: Shield },
+    { name: 'Join Room', href: '/join', icon: Users },
+    { name: 'FAQ', href: '/faq', icon: FileText },
+    { name: 'Contact', href: '/contact', icon: MessageCircle }
   ];
 
-  const isActive = (path: string) => location.pathname === path;
+  const authenticatedNavItems = [
+    { name: 'Home', href: '/', icon: Home },
+    { name: 'Create Room', href: '/create', icon: Lock },
+    { name: 'File Share', href: '/files', icon: FileText },
+    { name: 'Manage Rooms', href: '/rooms', icon: Settings },
+    { name: 'Underground', href: '/underground', icon: Globe, badge: 'Pro' }
+  ];
 
-  const closeMenu = () => setIsMobileMenuOpen(false);
+  const navItems = isAuthenticated ? authenticatedNavItems : publicNavItems;
+
+  // User status indicator
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'online': return 'bg-green-500';
+      case 'away': return 'bg-yellow-500';
+      case 'busy': return 'bg-red-500';
+      case 'invisible': return 'bg-gray-500';
+      default: return 'bg-gray-500';
+    }
+  };
+
+  // Generate user initials
+  const getUserInitials = (nickname: string) => {
+    return nickname
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   return (
-    <>
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled 
-          ? 'bg-card/95 backdrop-blur-md border-b border-border/50 shadow-lg shadow-primary/10' 
-          : 'bg-card/80 backdrop-blur-sm border-b border-border/30'
-      }`}>
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <Link 
-              to="/" 
-              className="flex items-center gap-3 font-bold text-xl group transition-all duration-300 hover:scale-105"
-              onClick={closeMenu}
-            >
-              <div className="relative">
-                <Shield className="h-7 w-7 text-primary transition-all duration-300 group-hover:rotate-12 group-hover:text-accent" />
-                <div className="absolute inset-0 h-7 w-7 bg-primary/20 rounded-full blur-md group-hover:bg-accent/30 transition-all duration-300" />
-              </div>
-              <span className="gradient-neon bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300">
-                SecureChat
-              </span>
-              <Badge variant="secondary" className="hidden sm:inline-flex bg-primary/10 text-primary text-xs animate-pulse">
-                v2.0
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      scrolled ? 'bg-background/95 backdrop-blur-md border-b border-border/50' : 'bg-transparent'
+    }`}>
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16 lg:h-20">
+          {/* Logo */}
+          <Link to="/" className="flex items-center space-x-3 group">
+            <div className="relative">
+              <Shield className={`h-8 w-8 transition-all duration-300 ${
+                isStealthMode ? 'text-gray-500' : 'text-primary group-hover:text-accent'
+              }`} />
+              {isAuthenticated && (
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+              )}
+            </div>
+            <span className={`text-xl lg:text-2xl font-bold transition-colors ${
+              isStealthMode ? 'text-gray-600' : 'text-foreground group-hover:text-primary'
+            }`}>
+              {isStealthMode ? 'Calculator Pro' : 'SecureChat'}
+            </span>
+            {user && (
+              <Badge variant="secondary" className="hidden lg:inline-flex text-xs">
+                v2.1.0
               </Badge>
-            </Link>
+            )}
+          </Link>
 
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-1">
-              {navItems.map((item) => (
+          {/* Desktop Navigation */}
+          <div className="hidden lg:flex items-center space-x-1">
+            {navItems.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
                 <Link
-                  key={item.href}
+                  key={item.name}
                   to={item.href}
-                  className={`relative px-4 py-2 text-sm font-medium transition-all duration-300 rounded-lg group ${
-                    isActive(item.href)
-                      ? item.special ? 'text-red-400 bg-red-500/10 border border-red-500/20' : 'text-primary bg-primary/10'
-                      : item.special ? 'text-red-500 hover:text-red-400 hover:bg-red-500/5' : 'text-muted-foreground hover:text-primary hover:bg-primary/5'
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 relative group ${
+                    isActive 
+                      ? 'bg-primary/10 text-primary' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                   }`}
                 >
-                  <div className="flex items-center gap-2">
-                    {item.icon && <item.icon className="h-4 w-4" />}
-                    {item.label}
-                  </div>
-                  {isActive(item.href) && (
-                    <div className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 rounded-full animate-pulse ${
-                      item.special ? 'bg-red-500' : 'bg-primary'
-                    }`} />
+                  <item.icon className="h-4 w-4" />
+                  <span className="font-medium">{item.name}</span>
+                  {item.badge && (
+                    <Badge variant="secondary" className="text-xs bg-accent/20 text-accent">
+                      {item.badge}
+                    </Badge>
                   )}
-                  <div className="absolute inset-0 rounded-lg bg-primary/5 scale-0 group-hover:scale-100 transition-transform duration-300 -z-10" />
+                  {isActive && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
+                  )}
                 </Link>
-              ))}
-            </div>
+              );
+            })}
+          </div>
 
-            {/* Desktop Right Section */}
-            <div className="hidden md:flex items-center gap-3">
-              {/* Live Status Indicator */}
-              <div className="flex items-center gap-2 text-xs text-muted-foreground bg-card/50 px-3 py-1 rounded-full border border-border/50">
-                <div className="flex items-center gap-1">
-                  <Activity className="h-3 w-3 text-neon-green" />
-                  <span className="text-neon-green animate-pulse">LIVE</span>
-                </div>
-                <span>•</span>
-                <span>147 rooms</span>
-              </div>
-
-              {/* User Session */}
-              {session ? (
-                <div className="relative">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowUserMenu(!showUserMenu)}
-                    className="flex items-center gap-2 hover:bg-primary/10"
-                  >
-                    <User className="h-4 w-4" />
-                    <span className="hidden lg:inline">{session.nickname}</span>
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-                  
-                  {showUserMenu && (
-                    <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-xl py-2 z-50">
-                      <Link 
-                        to="/auth" 
-                        className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-primary/10 transition-colors"
-                        onClick={() => setShowUserMenu(false)}
-                      >
-                        <Settings className="h-4 w-4" />
-                        Session Settings
-                      </Link>
-                      <hr className="my-1 border-border" />
-                      <button 
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors w-full text-left"
-                        onClick={() => {
-                          setShowUserMenu(false);
-                          // Add logout logic here
-                        }}
-                      >
-                        <LogOut className="h-4 w-4" />
-                        End Session
-                      </button>
-                    </div>
+          {/* User Menu / Auth Buttons */}
+          <div className="flex items-center space-x-4">
+            {/* Live Status Indicator */}
+            {isAuthenticated && (
+              <div className="hidden lg:flex items-center space-x-4">
+                {/* Notifications */}
+                <Button variant="ghost" size="sm" className="relative">
+                  <Bell className="h-4 w-4" />
+                  {notifications > 0 && (
+                    <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs bg-destructive">
+                      {notifications}
+                    </Badge>
                   )}
-                </div>
-              ) : (
-                <Button variant="ghost" size="sm" asChild className="hover:bg-primary/10">
-                  <Link to="/auth">
-                    <User className="mr-2 h-4 w-4" />
-                    Session
-                  </Link>
                 </Button>
-              )}
 
-              <Button variant="outline" size="sm" asChild className="hover:bg-accent/10 hover:border-accent/50">
-                <Link to="/join">
-                  <Lock className="mr-2 h-4 w-4" />
+                {/* Connection Status */}
+                <div className="flex items-center space-x-2 text-sm">
+                  <div className="flex items-center space-x-1">
+                    <Activity className="h-4 w-4 text-green-500" />
+                    <span className="text-green-500 font-medium">Live</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                        {getUserInitials(user?.nickname || 'U')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background ${
+                      getStatusColor(user?.status || 'offline')
+                    }`} />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-64" align="end">
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium">{user?.nickname}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {user?.isAnonymous ? 'Anonymous Session' : user?.email}
+                      </p>
+                      <div className="flex items-center space-x-2 text-xs">
+                        <span className={`w-2 h-2 rounded-full ${getStatusColor(user?.status || 'offline')}`} />
+                        <span className="capitalize">{user?.status || 'offline'}</span>
+                        {user?.isAnonymous && (
+                          <Badge variant="secondary" className="text-xs">
+                            Anonymous
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  
+                  <DropdownMenuItem onClick={() => navigate('/profile')}>
+                    <User className="mr-2 h-4 w-4" />
+                    Profile Settings
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuItem onClick={() => navigate('/app-modes')}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    App Modes
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuItem onClick={toggleStealth}>
+                    {isStealthMode ? (
+                      <Eye className="mr-2 h-4 w-4" />
+                    ) : (
+                      <EyeOff className="mr-2 h-4 w-4" />
+                    )}
+                    {isStealthMode ? 'Disable Stealth' : 'Enable Stealth'}
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  <DropdownMenuItem 
+                    onClick={handleLogout}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => navigate('/auth')}
+                  className="hidden sm:inline-flex"
+                >
+                  Sign In
+                </Button>
+                <Button 
+                  onClick={() => navigate('/join')}
+                  size="sm"
+                >
+                  <Users className="h-4 w-4 mr-2" />
                   Join Room
-                </Link>
-              </Button>
-              
-              <Button variant="cyber" size="sm" asChild className="animate-glow-pulse">
-                <Link to="/create">
-                  <Zap className="mr-2 h-4 w-4" />
-                  Start Chat
-                </Link>
-              </Button>
-            </div>
+                </Button>
+              </div>
+            )}
 
             {/* Mobile Menu Button */}
             <Button
               variant="ghost"
               size="sm"
-              className="md:hidden hover:bg-primary/10 transition-colors"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden"
+              onClick={() => setIsOpen(!isOpen)}
             >
-              {isMobileMenuOpen ? (
-                <X className="h-5 w-5 transition-transform duration-300 rotate-90" />
-              ) : (
-                <Menu className="h-5 w-5 transition-transform duration-300" />
-              )}
+              {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           </div>
         </div>
 
-        {/* Mobile Navigation Overlay */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden fixed inset-0 top-16 bg-background/95 backdrop-blur-lg z-50 animate-fade-in-up">
-            <div className="container mx-auto px-4 py-6">
-              {/* Mobile Live Status */}
-              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground bg-card/50 px-4 py-2 rounded-full border border-border/50 mb-6">
-                <Activity className="h-4 w-4 text-neon-green" />
-                <span className="text-neon-green animate-pulse">LIVE</span>
-                <span>•</span>
-                <span>147 active rooms</span>
-              </div>
-
-              {/* Mobile Navigation Links */}
-              <div className="space-y-1 mb-8">
-                {navItems.map((item, index) => (
+        {/* Mobile Navigation */}
+        {isOpen && (
+          <div className="lg:hidden border-t border-border/50 bg-background/95 backdrop-blur-md">
+            <div className="px-2 pt-2 pb-3 space-y-1">
+              {navItems.map((item) => {
+                const isActive = location.pathname === item.href;
+                return (
                   <Link
-                    key={item.href}
+                    key={item.name}
                     to={item.href}
-                    onClick={closeMenu}
-                    className={`flex items-center gap-3 px-4 py-3 text-base font-medium transition-all duration-300 rounded-lg ${
-                      isActive(item.href)
-                        ? 'text-primary bg-primary/10 border border-primary/20'
-                        : 'text-muted-foreground hover:text-primary hover:bg-primary/5'
+                    className={`flex items-center space-x-3 px-3 py-3 rounded-lg transition-all duration-200 ${
+                      isActive 
+                        ? 'bg-primary/10 text-primary' 
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                     }`}
-                    style={{ animationDelay: `${index * 50}ms` }}
+                    onClick={() => setIsOpen(false)}
                   >
-                    {item.icon && <item.icon className="h-5 w-5" />}
-                    {item.label}
-                    {isActive(item.href) && (
-                      <div className="ml-auto w-2 h-2 bg-primary rounded-full animate-pulse" />
+                    <item.icon className="h-5 w-5" />
+                    <span className="font-medium">{item.name}</span>
+                    {item.badge && (
+                      <Badge variant="secondary" className="text-xs bg-accent/20 text-accent ml-auto">
+                        {item.badge}
+                      </Badge>
                     )}
                   </Link>
-                ))}
-              </div>
-
-              {/* Mobile Session Info */}
-              {session && (
-                <div className="mb-6 p-4 bg-card/50 rounded-lg border border-border/50">
-                  <div className="flex items-center gap-3 mb-3">
-                    <User className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="font-medium">{session.nickname}</p>
-                      <p className="text-xs text-muted-foreground">Active Session</p>
-                    </div>
-                  </div>
-                  <Link 
-                    to="/auth" 
-                    onClick={closeMenu}
-                    className="text-sm text-primary hover:underline"
+                );
+              })}
+              
+              {!isAuthenticated && (
+                <div className="pt-3 border-t border-border/50 mt-3">
+                  <Link
+                    to="/auth"
+                    className="flex items-center space-x-3 px-3 py-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all duration-200"
+                    onClick={() => setIsOpen(false)}
                   >
-                    Manage Session →
+                    <User className="h-5 w-5" />
+                    <span className="font-medium">Sign In</span>
                   </Link>
                 </div>
               )}
 
-              {/* Mobile CTA Buttons */}
-              <div className="space-y-3">
-                <Button variant="outline" asChild className="w-full justify-start" onClick={closeMenu}>
-                  <Link to="/join">
-                    <Lock className="mr-2 h-4 w-4" />
-                    Join Room
-                  </Link>
-                </Button>
-                <Button variant="cyber" asChild className="w-full justify-start" onClick={closeMenu}>
-                  <Link to="/create">
-                    <Zap className="mr-2 h-4 w-4" />
-                    Start Secure Chat
-                  </Link>
-                </Button>
-                {!session && (
-                  <Button variant="ghost" asChild className="w-full justify-start" onClick={closeMenu}>
-                    <Link to="/auth">
-                      <User className="mr-2 h-4 w-4" />
-                      Create Session
-                    </Link>
-                  </Button>
-                )}
-              </div>
-
-              {/* Mobile Footer */}
-              <div className="mt-8 pt-6 border-t border-border/50 text-center">
-                <p className="text-xs text-muted-foreground">
-                  🔐 Secure • 🌐 Anonymous • 🚫 No Logs
-                </p>
-              </div>
+              {isAuthenticated && (
+                <div className="pt-3 border-t border-border/50 mt-3 space-y-1">
+                  <div className="px-3 py-2">
+                    <div className="flex items-center space-x-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                          {getUserInitials(user?.nickname || 'U')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{user?.nickname}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {user?.isAnonymous ? 'Anonymous' : 'Registered'}
+                        </p>
+                      </div>
+                      <div className={`w-3 h-3 rounded-full ${getStatusColor(user?.status || 'offline')}`} />
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsOpen(false);
+                    }}
+                    className="flex items-center space-x-3 px-3 py-3 w-full text-left rounded-lg text-destructive hover:bg-destructive/10 transition-all duration-200"
+                  >
+                    <LogOut className="h-5 w-5" />
+                    <span className="font-medium">Sign Out</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
-      </nav>
-
-      {/* Spacer to prevent content overlap */}
-      <div className="h-16" />
-
-      {/* Close mobile menu on outside click */}
-      {isMobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-black/20 z-40 md:hidden"
-          onClick={closeMenu}
-        />
-      )}
-    </>
+      </div>
+    </nav>
   );
 };
 
