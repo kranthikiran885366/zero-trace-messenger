@@ -1,26 +1,46 @@
-import { useState } from 'react';
-import { Copy, Shield, Timer, Key, Link2, QrCode } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Copy, Shield, Timer, Key, Link2, QrCode, Users, Download, Share2, Settings, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import { encryption } from '@/lib/encryption';
+import { useNavigate } from 'react-router-dom';
 
 const RoomCreator = () => {
   const [roomSettings, setRoomSettings] = useState({
     password: '',
     autoDestroy: '3600000', // 1 hour default
-    maxUsers: '2',
+    maxUsers: '10',
     enableVideo: true,
     enableFileSharing: true,
+    enableScreenShare: true,
+    allowAnonymousJoin: true,
+    messageRetention: '86400000', // 24 hours
+    roomDescription: '',
+    maxFileSize: '50', // MB
+    enableVoiceNotes: true,
+    enableDrawing: false,
+    roomTheme: 'cyber'
   });
   
   const [generatedRoom, setGeneratedRoom] = useState<{
     code: string;
     link: string;
+    encryptionKey: string;
+    roomId: string;
+    qrCode?: string;
+    expiresAt: number;
   } | null>(null);
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [advancedSettings, setAdvancedSettings] = useState(false);
 
   const { toast } = useToast();
 
@@ -38,27 +58,67 @@ const RoomCreator = () => {
     { value: '5', label: '5 users' },
     { value: '10', label: '10 users' },
     { value: '20', label: '20 users' },
+    { value: '50', label: '50 users' },
+    { value: '100', label: '100 users' },
   ];
 
-  const generateRoom = () => {
-    // Generate a secure random room code
-    const roomCode = Array.from({ length: 16 }, () => 
-      'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'[
-        Math.floor(Math.random() * 57)
-      ]
-    ).join('');
+  const fileSizeOptions = [
+    { value: '10', label: '10 MB' },
+    { value: '25', label: '25 MB' },
+    { value: '50', label: '50 MB' },
+    { value: '100', label: '100 MB' },
+    { value: '250', label: '250 MB' },
+  ];
 
-    const roomLink = `${window.location.origin}/room/${roomCode}`;
+  const themeOptions = [
+    { value: 'cyber', label: 'Cyber (Default)' },
+    { value: 'dark', label: 'Dark Mode' },
+    { value: 'light', label: 'Light Mode' },
+    { value: 'matrix', label: 'Matrix Green' },
+  ];
 
-    setGeneratedRoom({
-      code: roomCode,
-      link: roomLink,
-    });
+  const navigate = useNavigate();
 
-    toast({
-      title: "Secure Room Created",
-      description: "Your anonymous chat room is ready. Share the code with participants.",
-    });
+  const generateRoom = async () => {
+    setIsGenerating(true);
+
+    try {
+      // Generate secure room credentials
+      const roomId = encryption.generateRoomId();
+      const encryptionKey = encryption.generateRoomKey();
+      const roomCode = encryption.generateRoomId() + encryption.generateRoomId().slice(0, 8); // 24 char code
+
+      // Calculate expiration time
+      const expiresAt = roomSettings.autoDestroy === 'manual'
+        ? Date.now() + (365 * 24 * 60 * 60 * 1000) // 1 year for manual
+        : Date.now() + parseInt(roomSettings.autoDestroy);
+
+      const roomLink = `${window.location.origin}/chat/${roomCode}`;
+
+      // Simulate room creation API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      setGeneratedRoom({
+        code: roomCode,
+        link: roomLink,
+        encryptionKey,
+        roomId,
+        expiresAt,
+      });
+
+      toast({
+        title: "🔐 Secure Room Created Successfully!",
+        description: `Room ${roomCode} is ready for secure communication.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Room Creation Failed",
+        description: "Please try again or contact support if the issue persists.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const copyToClipboard = (text: string, type: string) => {
@@ -107,15 +167,41 @@ const RoomCreator = () => {
                 {/* Room Password */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Room Password (Optional)</label>
-                  <Input
-                    type="password"
-                    placeholder="Leave empty for no password"
-                    value={roomSettings.password}
-                    onChange={(e) => setRoomSettings(prev => ({ ...prev, password: e.target.value }))}
-                    className="bg-background/50"
-                  />
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Leave empty for no password"
+                      value={roomSettings.password}
+                      onChange={(e) => setRoomSettings(prev => ({ ...prev, password: e.target.value }))}
+                      className="bg-background/50 pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     Add an extra layer of security with a password
+                  </p>
+                </div>
+
+                {/* Room Description */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Room Description (Optional)</label>
+                  <Textarea
+                    placeholder="Brief description of this room's purpose..."
+                    value={roomSettings.roomDescription}
+                    onChange={(e) => setRoomSettings(prev => ({ ...prev, roomDescription: e.target.value }))}
+                    className="bg-background/50 resize-none"
+                    rows={2}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Help participants understand the room's purpose
                   </p>
                 </div>
 
