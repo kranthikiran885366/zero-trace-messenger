@@ -80,19 +80,59 @@ const VideoCallInterface = () => {
 
             <div className="flex items-center gap-4">
               {isCallActive && (
-                <div className="text-sm text-muted-foreground">
-                  Duration: {formatDuration(callDuration)}
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <span>Duration: {formatDuration(callDuration)}</span>
+                  <span>Participants: {callUsers.length + 1}</span>
                 </div>
               )}
-              <div className="flex items-center gap-2 text-sm">
-                <span>IP Masking:</span>
-                <Switch 
-                  checked={ipMasked} 
-                  onCheckedChange={setIpMasked}
-                  className="data-[state=checked]:bg-primary"
-                />
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={copyRoomLink}>
+                  <Share2 className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => navigate(`/chat/${roomId}`)}>
+                  <MessageSquare className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setShowSettings(!showSettings)}>
+                  <Settings className="h-4 w-4" />
+                </Button>
               </div>
             </div>
+
+            {/* Settings Panel */}
+            {showSettings && (
+              <div className="mt-4 p-4 bg-card/50 rounded-lg border">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Video Quality</label>
+                    <Select value={videoQuality} onValueChange={setVideoQuality}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {videoQualityOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">IP Masking</span>
+                      <Switch
+                        checked={ipMasked}
+                        onCheckedChange={setIpMasked}
+                        className="data-[state=checked]:bg-primary"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Route through proxy servers for privacy
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </CardHeader>
       </Card>
