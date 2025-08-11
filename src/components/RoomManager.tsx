@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Shield, Users, Clock, Settings, Trash2, Eye, EyeOff, Copy, AlertTriangle, Activity, Lock, Unlock } from 'lucide-react';
+import { Shield, Users, Clock, Settings, Trash2, Eye, EyeOff, Copy, AlertTriangle, Activity, Lock, Unlock, ArrowLeft, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { encryption } from '@/lib/encryption';
+import { useNavigate } from 'react-router-dom';
 
 interface RoomInfo {
   id: string;
@@ -49,6 +50,7 @@ interface SecurityLog {
 
 const RoomManager = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [activeRooms, setActiveRooms] = useState<RoomInfo[]>([]);
   const [securityLogs, setSecurityLogs] = useState<SecurityLog[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<RoomInfo | null>(null);
@@ -219,6 +221,30 @@ const RoomManager = () => {
 
   return (
     <div className="min-h-screen bg-background p-4">
+      {/* Back Button Header */}
+      <div className="max-w-6xl mx-auto mb-6">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => navigate('/')}
+            className="bg-primary/10 border-primary/50 hover:bg-primary/20 hover:border-primary/70 text-primary transition-all duration-300 shadow-lg shadow-primary/20"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            BACK TO HOME
+          </Button>
+
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => navigate('/create')}
+            className="bg-accent/10 border-accent/50 hover:bg-accent/20 hover:border-accent/70 text-accent transition-all duration-300 shadow-lg shadow-accent/20"
+          >
+            <Shield className="h-5 w-5 mr-2" />
+            CREATE NEW ROOM
+          </Button>
+        </div>
+      </div>
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <Card className="bg-card/80 backdrop-blur-sm border-primary/20">
