@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import SteganographyTool from './SteganographyTool';
+import CryptoMixer from './CryptoMixer';
 
 interface OnionLayer {
   id: string;
@@ -247,12 +249,14 @@ const DarkWebHub = () => {
 
         {/* Main Interface */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="hub">🏠 Hub</TabsTrigger>
             <TabsTrigger value="onion">🧅 Routing</TabsTrigger>
             <TabsTrigger value="marketplace">🏪 Market</TabsTrigger>
             <TabsTrigger value="deaddrops">📍 Drops</TabsTrigger>
             <TabsTrigger value="mesh">🕸️ Mesh</TabsTrigger>
+            <TabsTrigger value="crypto">₿ Mixer</TabsTrigger>
+            <TabsTrigger value="stego">👁️ Stego</TabsTrigger>
             <TabsTrigger value="terminal">💻 Terminal</TabsTrigger>
           </TabsList>
 
@@ -524,6 +528,16 @@ const DarkWebHub = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Crypto Mixer Tab */}
+          <TabsContent value="crypto">
+            <CryptoMixer />
+          </TabsContent>
+
+          {/* Steganography Tab */}
+          <TabsContent value="stego">
+            <SteganographyTool />
           </TabsContent>
 
           {/* Terminal Tab */}
