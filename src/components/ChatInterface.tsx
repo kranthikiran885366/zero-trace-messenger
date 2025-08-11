@@ -1,26 +1,44 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Timer, Video, Phone, Shield, Trash2, Settings } from 'lucide-react';
+import { Send, Timer, Video, Phone, Shield, Trash2, Settings, Paperclip, Mic, MicOff, Image, FileText, Download, Copy, Eye, Users, Lock, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { useParams } from 'react-router-dom';
+import { websocketService, type ChatMessage } from '@/lib/websocket';
+import { encryption } from '@/lib/encryption';
 
-interface Message {
+interface FileData {
+  name: string;
+  size: number;
+  type: string;
+  url: string;
+}
+
+interface RoomUser {
   id: string;
-  content: string;
-  timestamp: number;
-  isOwn: boolean;
-  autoDeleteAfter?: number;
-  timeRemaining?: number;
+  nickname: string;
+  isOnline: boolean;
+  lastSeen: number;
 }
 
 const ChatInterface = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { roomId } = useParams();
+  const { toast } = useToast();
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [autoDeleteTime, setAutoDeleteTime] = useState('300000'); // 5 minutes default
-  const [isConnected, setIsConnected] = useState(true);
+  const [isConnected, setIsConnected] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(true);
+  const [roomUsers, setRoomUsers] = useState<RoomUser[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
+  const [encryptionKey, setEncryptionKey] = useState<string>('');
+  const [showUsers, setShowUsers] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -29,6 +47,55 @@ const ChatInterface = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    if (!roomId) return;
+
+    const connectToRoom = async () => {
+      try {
+        setIsConnecting(true);
+        const roomSettings = await websocketService.connectToRoom(roomId);
+        setEncryptionKey(roomSettings.encryptionKey);
+        setIsConnected(true);
+
+        toast({
+          title: "🔐 Connected to Secure Room",
+          description: `Room ${roomId} - All messages are end-to-end encrypted`,
+        });
+      } catch (error) {
+        toast({
+          title: "Connection Failed",
+          description: "Unable to connect to the room. Please check the room code.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsConnecting(false);
+      }
+    };
+
+    connectToRoom();
+
+    // Set up message handler
+    const unsubscribeMessages = websocketService.onMessage((message) => {
+      setMessages(prev => [...prev, message]);
+
+      // Auto-delete timer
+      if (message.autoDeleteAfter && message.senderId !== websocketService.getRoomInfo().userId) {
+        setTimeout(() => {
+          setMessages(prev => prev.filter(m => m.id !== message.id));
+        }, message.autoDeleteAfter);
+      }
+    });
+
+    // Set up connection handler
+    const unsubscribeConnection = websocketService.onConnection(setIsConnected);
+
+    return () => {
+      unsubscribeMessages();
+      unsubscribeConnection();
+      websocketService.leaveRoom();
+    };
+  }, [roomId, toast]);
 
   const deleteTimeOptions = [
     { value: '15000', label: '15 seconds' },
@@ -39,46 +106,73 @@ const ChatInterface = () => {
     { value: 'read', label: 'On read' },
   ];
 
-  const sendMessage = () => {
-    if (!newMessage.trim()) return;
+  const sendMessage = async () => {
+    if (!newMessage.trim() || !isConnected) return;
 
-    const message: Message = {
-      id: Date.now().toString(),
-      content: newMessage,
-      timestamp: Date.now(),
-      isOwn: true,
-      autoDeleteAfter: autoDeleteTime === 'read' ? undefined : parseInt(autoDeleteTime),
-      timeRemaining: autoDeleteTime === 'read' ? undefined : parseInt(autoDeleteTime),
-    };
+    try {
+      await websocketService.sendMessage(newMessage, 'text');
+      setNewMessage('');
 
-    setMessages(prev => [...prev, message]);
-    setNewMessage('');
+      // Auto-delete timer for own messages
+      if (autoDeleteTime !== 'read') {
+        setTimeout(() => {
+          setMessages(prev => prev.filter(m =>
+            m.timestamp < Date.now() - parseInt(autoDeleteTime) ||
+            m.senderId !== websocketService.getRoomInfo().userId
+          ));
+        }, parseInt(autoDeleteTime));
+      }
+    } catch (error) {
+      toast({
+        title: "Message Send Failed",
+        description: "Unable to send message. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
 
-    // Auto-delete timer
-    if (message.autoDeleteAfter) {
-      setTimeout(() => {
-        setMessages(prev => prev.filter(m => m.id !== message.id));
-      }, message.autoDeleteAfter);
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !isConnected) return;
+
+    try {
+      await websocketService.sendFile(file);
+      toast({
+        title: "File Sent",
+        description: `${file.name} has been securely transmitted.`,
+      });
+    } catch (error) {
+      toast({
+        title: "File Upload Failed",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive"
+      });
     }
 
-    // Simulate received message
-    setTimeout(() => {
-      const response: Message = {
-        id: (Date.now() + 1).toString(),
-        content: "Message received securely. This response will also self-destruct.",
-        timestamp: Date.now() + 1000,
-        isOwn: false,
-        autoDeleteAfter: parseInt(autoDeleteTime),
-        timeRemaining: parseInt(autoDeleteTime),
-      };
-      setMessages(prev => [...prev, response]);
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
-      if (response.autoDeleteAfter) {
-        setTimeout(() => {
-          setMessages(prev => prev.filter(m => m.id !== response.id));
-        }, response.autoDeleteAfter);
-      }
-    }, 1000);
+  const copyMessageContent = (content: string) => {
+    navigator.clipboard.writeText(content);
+    toast({
+      title: "Message Copied",
+      description: "Message content copied to clipboard.",
+    });
+  };
+
+  const startVoiceRecording = () => {
+    setIsRecording(true);
+    // In a real app, this would start recording audio
+    setTimeout(() => {
+      setIsRecording(false);
+      toast({
+        title: "Voice Note Recorded",
+        description: "Voice message has been sent securely.",
+      });
+    }, 3000);
   };
 
   const formatTimeRemaining = (ms: number) => {
@@ -89,6 +183,32 @@ const ChatInterface = () => {
     const hours = Math.floor(minutes / 60);
     return `${hours}h`;
   };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const isOwnMessage = (message: ChatMessage) => {
+    return message.senderId === websocketService.getRoomInfo().userId;
+  };
+
+  if (isConnecting) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+        <Card className="bg-card/80 backdrop-blur-sm">
+          <CardContent className="p-8 text-center">
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Connecting to Secure Room</h3>
+            <p className="text-muted-foreground">Establishing encrypted connection...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -105,15 +225,20 @@ const ChatInterface = () => {
               </div>
               <Badge variant="secondary" className="bg-primary/10 text-primary">
                 <Shield className="w-3 h-3 mr-1" />
-                Encrypted
+                E2E Encrypted
+              </Badge>
+              <Badge variant="secondary" className="bg-accent/10 text-accent">
+                <Lock className="w-3 h-3 mr-1" />
+                Room: {roomId?.slice(-8)}
               </Badge>
             </div>
 
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm">
-                <Phone className="h-4 w-4" />
+              <Button variant="ghost" size="sm" onClick={() => setShowUsers(!showUsers)}>
+                <Users className="h-4 w-4" />
+                <span className="ml-1 text-xs">{roomUsers.length}</span>
               </Button>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" onClick={() => window.open(`/video/${roomId}`, '_blank')}>
                 <Video className="h-4 w-4" />
               </Button>
               <Button variant="ghost" size="sm">
