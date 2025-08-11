@@ -507,17 +507,42 @@ const RoomCreator = () => {
                 </div>
               </div>
 
+              {/* Encryption Info */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Shield className="h-4 w-4" />
+                  Encryption Fingerprint
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    value={encryption.generateFingerprint(generatedRoom.encryptionKey)}
+                    readOnly
+                    className="font-mono text-sm bg-accent/5 border-accent/20"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => copyToClipboard(encryption.generateFingerprint(generatedRoom.encryptionKey), 'Fingerprint')}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Share this fingerprint to verify secure connections
+                </p>
+              </div>
+
               {/* Room Settings Summary */}
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
+              <div className="grid lg:grid-cols-3 gap-4 pt-4 border-t border-border">
                 <div className="space-y-2">
-                  <p className="text-sm font-medium">Room Settings:</p>
+                  <p className="text-sm font-medium">Security:</p>
                   <div className="space-y-1">
                     <Badge variant="secondary">
                       <Timer className="h-3 w-3 mr-1" />
-                      Auto-destroy: {autoDestroyOptions.find(opt => opt.value === roomSettings.autoDestroy)?.label}
+                      {autoDestroyOptions.find(opt => opt.value === roomSettings.autoDestroy)?.label}
                     </Badge>
                     <Badge variant="secondary">
-                      Max users: {roomSettings.maxUsers}
+                      <Users className="h-3 w-3 mr-1" />
+                      Max {roomSettings.maxUsers} users
                     </Badge>
                     {roomSettings.password && (
                       <Badge variant="secondary">
@@ -528,33 +553,94 @@ const RoomCreator = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-sm font-medium">Features:</p>
+                  <p className="text-sm font-medium">Communication:</p>
                   <div className="space-y-1">
                     {roomSettings.enableVideo && (
-                      <Badge variant="secondary">Video calls enabled</Badge>
+                      <Badge variant="secondary">Video calls</Badge>
                     )}
                     {roomSettings.enableFileSharing && (
-                      <Badge variant="secondary">File sharing enabled</Badge>
+                      <Badge variant="secondary">File sharing</Badge>
                     )}
+                    {roomSettings.enableScreenShare && (
+                      <Badge variant="secondary">Screen share</Badge>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Advanced:</p>
+                  <div className="space-y-1">
+                    {roomSettings.enableVoiceNotes && (
+                      <Badge variant="secondary">Voice notes</Badge>
+                    )}
+                    {roomSettings.enableDrawing && (
+                      <Badge variant="secondary">Drawing board</Badge>
+                    )}
+                    <Badge variant="secondary">
+                      Max {roomSettings.maxFileSize}MB files
+                    </Badge>
                   </div>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="flex gap-4 pt-4">
-                <Button variant="cyber" className="flex-1" asChild>
-                  <a href={generatedRoom.link}>
+              <div className="space-y-4 pt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <Button variant="cyber" onClick={() => navigate(`/chat/${generatedRoom.code}`)}>
                     <Shield className="mr-2 h-4 w-4" />
                     Enter Room
-                  </a>
-                </Button>
-                <Button variant="outline" onClick={resetRoom}>
-                  Create Another Room
-                </Button>
+                  </Button>
+                  <Button variant="neon" onClick={() => navigate(`/video/${generatedRoom.code}`)}>
+                    <Users className="mr-2 h-4 w-4" />
+                    Video Call
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <Button variant="outline" size="sm" onClick={() => copyToClipboard(generatedRoom.code, 'Room Code')}>
+                    <Copy className="mr-1 h-3 w-3" />
+                    Copy Code
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => copyToClipboard(generatedRoom.link, 'Link')}>
+                    <Share2 className="mr-1 h-3 w-3" />
+                    Share Link
+                  </Button>
+                  <Button variant="outline" size="sm" disabled>
+                    <QrCode className="mr-1 h-3 w-3" />
+                    QR Code
+                  </Button>
+                </div>
+
+                <Separator />
+
+                <div className="flex gap-4">
+                  <Button variant="ghost" onClick={resetRoom} className="flex-1">
+                    Create Another Room
+                  </Button>
+                  <Button variant="outline" onClick={() => {
+                    const roomData = {
+                      code: generatedRoom.code,
+                      link: generatedRoom.link,
+                      settings: roomSettings,
+                      created: new Date().toISOString()
+                    };
+                    const blob = new Blob([JSON.stringify(roomData, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `room-${generatedRoom.code}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Export Details
+                  </Button>
+                </div>
               </div>
 
-              <div className="text-xs text-center text-muted-foreground">
-                ��� This room uses military-grade encryption • 🌐 IP addresses are masked • 🚫 No data is logged
+              <div className="text-xs text-center text-muted-foreground space-y-1">
+                <p>🔒 AES-256 encryption • 🌐 IP masking via Tor • 🚫 Zero logging policy</p>
+                <p>Expires: {new Date(generatedRoom.expiresAt).toLocaleString()}</p>
+                <p className="text-primary">Room ID: {generatedRoom.roomId} • Fingerprint: {encryption.generateFingerprint(generatedRoom.encryptionKey)}</p>
               </div>
             </CardContent>
           </Card>
