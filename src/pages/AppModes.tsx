@@ -1,101 +1,150 @@
 import { useState } from 'react';
-import { Eye, EyeOff, Calculator, FileText, Shield, Settings, MessageSquare, Zap } from 'lucide-react';
+import { Palette, Eye, EyeOff, Calculator, FileText, Calendar, Camera, Music, Gamepad2, Monitor, Smartphone, Tablet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
 import Navigation from '@/components/Navigation';
-import { Link } from 'react-router-dom';
 
 const AppModes = () => {
+  const { toast } = useToast();
+  const [selectedMode, setSelectedMode] = useState('secure');
+  const [selectedTheme, setSelectedTheme] = useState('cyber');
   const [stealthEnabled, setStealthEnabled] = useState(false);
-  const [stealthMode, setStealthMode] = useState('calculator');
-  const [decoyEnabled, setDecoyEnabled] = useState(false);
-  const [panicCode, setPanicCode] = useState('');
+  const [previewMode, setPreviewMode] = useState('desktop');
 
-  const stealthModes = [
+  const appModes = [
+    {
+      id: 'secure',
+      name: 'Secure Mode',
+      description: 'Full security features with visible SecureChat branding',
+      icon: Eye,
+      color: 'bg-primary/10 text-primary border-primary/20',
+      features: ['All security features', 'Visible branding', 'Full functionality', 'Advanced tools']
+    },
+    {
+      id: 'stealth',
+      name: 'Stealth Mode',
+      description: 'Disguised as innocent applications to avoid detection',
+      icon: EyeOff,
+      color: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
+      features: ['Hidden interface', 'Decoy applications', 'Secret access codes', 'Plausible deniability']
+    },
+    {
+      id: 'minimal',
+      name: 'Minimal Mode',
+      description: 'Simplified interface with essential features only',
+      icon: Monitor,
+      color: 'bg-green-500/10 text-green-500 border-green-500/20',
+      features: ['Clean interface', 'Core features only', 'Faster loading', 'Less conspicuous']
+    }
+  ];
+
+  const stealthApps = [
     {
       id: 'calculator',
-      title: 'Calculator App',
-      description: 'Disguise as a simple calculator application',
+      name: 'Calculator',
       icon: Calculator,
-      preview: 'Shows working calculator with math functions'
+      description: 'Scientific calculator with secret access',
+      preview: '🔢 Advanced Calculator Pro',
+      access: 'Enter 888+888= to unlock'
     },
     {
       id: 'notepad',
-      title: 'Note Taking App',
-      description: 'Appears as a basic note-taking application',
+      name: 'Notepad',
       icon: FileText,
-      preview: 'Displays editable text notes interface'
+      description: 'Simple text editor disguise',
+      preview: '📝 Quick Notes App',
+      access: 'Type "SecureChat" to unlock'
     },
     {
-      id: 'settings',
-      title: 'System Settings',
-      description: 'Looks like device settings panel',
-      icon: Settings,
-      preview: 'Shows fake system configuration options'
+      id: 'calendar',
+      name: 'Calendar',
+      icon: Calendar,
+      description: 'Calendar app with hidden features',
+      preview: '📅 Personal Calendar',
+      access: 'Create event "Meeting" to unlock'
+    },
+    {
+      id: 'camera',
+      name: 'Camera',
+      icon: Camera,
+      description: 'Photo app with secret mode',
+      preview: '📸 Camera Plus',
+      access: 'Take 3 photos quickly to unlock'
+    },
+    {
+      id: 'music',
+      name: 'Music Player',
+      icon: Music,
+      description: 'Music player with hidden chat',
+      preview: '🎵 Music Player Pro',
+      access: 'Play track titled "Secure" to unlock'
+    },
+    {
+      id: 'games',
+      name: 'Games',
+      icon: Gamepad2,
+      description: 'Simple games with secret access',
+      preview: '🎮 Mini Games',
+      access: 'Achieve score 1337 to unlock'
     }
   ];
 
-  const securityFeatures = [
+  const themes = [
     {
-      title: "Instant Mode Switch",
-      description: "Switch between stealth and normal mode in under 0.5 seconds",
-      icon: "⚡"
+      id: 'cyber',
+      name: 'Cyber Dark',
+      description: 'Futuristic dark theme with neon accents',
+      preview: 'bg-gradient-to-br from-blue-900 to-purple-900'
     },
     {
-      title: "Panic Code Protection",
-      description: "Enter a panic code to instantly activate decoy mode",
-      icon: "🔐"
+      id: 'matrix',
+      name: 'Matrix Green',
+      description: 'Classic green-on-black hacker aesthetic',
+      preview: 'bg-gradient-to-br from-green-900 to-black'
     },
     {
-      title: "Fake Data Generation",
-      description: "Generate realistic fake conversations and data",
-      icon: "🎭"
+      id: 'noir',
+      name: 'Dark Noir',
+      description: 'Minimalist black and white design',
+      preview: 'bg-gradient-to-br from-gray-900 to-black'
     },
     {
-      title: "Browser History Masking",
-      description: "Disguise browser history and recent activity",
-      icon: "🕵️"
+      id: 'ghost',
+      name: 'Ghost White',
+      description: 'Clean white theme for daylight use',
+      preview: 'bg-gradient-to-br from-gray-100 to-white'
+    },
+    {
+      id: 'sunset',
+      name: 'Sunset Orange',
+      description: 'Warm orange and red color scheme',
+      preview: 'bg-gradient-to-br from-orange-500 to-red-600'
+    },
+    {
+      id: 'ocean',
+      name: 'Deep Ocean',
+      description: 'Blue underwater theme',
+      preview: 'bg-gradient-to-br from-blue-800 to-blue-900'
     }
   ];
 
-  if (stealthEnabled && stealthMode === 'calculator') {
-    return (
-      <div className="min-h-screen bg-gray-100 p-8 flex items-center justify-center">
-        <div className="max-w-sm w-full bg-white rounded-lg shadow-lg p-6">
-          <div className="mb-4">
-            <div className="bg-gray-900 text-white p-4 rounded text-right text-2xl font-mono">
-              0
-            </div>
-          </div>
-          <div className="grid grid-cols-4 gap-3">
-            {['C', '±', '%', '÷', '7', '8', '9', '×', '4', '5', '6', '-', '1', '2', '3', '+', '0', '.', '='].map((btn, index) => (
-              <button 
-                key={index}
-                className={`p-4 rounded-lg font-semibold text-lg transition-colors ${
-                  ['C', '±', '%'].includes(btn) ? 'bg-gray-300 hover:bg-gray-400' :
-                  ['÷', '×', '-', '+', '='].includes(btn) ? 'bg-orange-500 hover:bg-orange-600 text-white' :
-                  'bg-gray-200 hover:bg-gray-300'
-                }`}
-                onClick={() => {
-                  if (btn === 'C' && panicCode === '888') {
-                    setStealthEnabled(false);
-                  }
-                }}
-              >
-                {btn === '0' ? <span className="w-full block">0</span> : btn}
-              </button>
-            ))}
-          </div>
-          <div className="mt-4 text-xs text-gray-500 text-center">
-            Calculator v2.1 • Type panic code to exit
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const applyMode = () => {
+    toast({
+      title: `${appModes.find(m => m.id === selectedMode)?.name} Applied`,
+      description: `SecureChat is now running in ${selectedMode} mode with ${selectedTheme} theme`,
+    });
+  };
+
+  const activateStealth = (appType: string) => {
+    toast({
+      title: "🕵️ Stealth Mode Activated",
+      description: `App disguised as ${stealthApps.find(app => app.id === appType)?.name}`,
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -106,248 +155,290 @@ const AppModes = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center space-y-6">
             <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-              🎭 Stealth & Security Modes
+              🎨 Application Modes & Themes
             </Badge>
             
             <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
-              <span className="text-foreground">Advanced </span>
-              <span className="gradient-neon bg-clip-text text-transparent">Stealth</span>
-              <span className="text-foreground"> Modes</span>
+              <span className="text-foreground">Customize Your </span>
+              <span className="gradient-neon bg-clip-text text-transparent">Experience</span>
             </h1>
             
             <p className="text-xl text-muted-foreground leading-relaxed max-w-3xl">
-              Configure advanced security modes to protect your identity and avoid detection 
-              in surveillance environments.
+              Choose between security-focused, stealth, or minimal modes. 
+              Customize themes and disguises to match your privacy needs.
             </p>
+
+            <div className="flex items-center justify-center gap-6 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                <span className="text-primary">Multiple Themes</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
+                <span className="text-accent">Stealth Disguises</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-neon-green rounded-full animate-pulse" />
+                <span className="text-neon-green">Responsive Design</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Stealth Mode Toggle */}
+      {/* Mode Selection */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto mb-12">
-            <Card className="bg-card/80 backdrop-blur-sm border-primary/20">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-2xl flex items-center gap-2">
-                      {stealthEnabled ? <EyeOff className="h-6 w-6" /> : <Eye className="h-6 w-6" />}
-                      Stealth Mode Control
-                    </CardTitle>
-                    <CardDescription className="text-base mt-2">
-                      Enable stealth mode to disguise SecureChat as an innocent application
-                    </CardDescription>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl lg:text-4xl font-bold mb-4">
+              <span className="text-foreground">Application </span>
+              <span className="gradient-neon bg-clip-text text-transparent">Modes</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Choose the mode that best fits your security and privacy requirements
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 mb-8">
+            {appModes.map((mode) => (
+              <Card 
+                key={mode.id} 
+                className={`cursor-pointer transition-all duration-300 ${
+                  selectedMode === mode.id 
+                    ? `${mode.color} scale-105 shadow-lg` 
+                    : 'bg-card/50 hover:bg-card/70'
+                }`}
+                onClick={() => setSelectedMode(mode.id)}
+              >
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="w-12 h-12 rounded-lg bg-background/20 flex items-center justify-center">
+                      <mode.icon className="h-6 w-6" />
+                    </div>
+                    {selectedMode === mode.id && (
+                      <Badge variant="secondary" className="bg-background/20">
+                        Active
+                      </Badge>
+                    )}
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium">
-                      {stealthEnabled ? "Active" : "Disabled"}
-                    </span>
-                    <Switch 
-                      checked={stealthEnabled}
-                      onCheckedChange={setStealthEnabled}
-                      className="data-[state=checked]:bg-primary"
-                    />
-                  </div>
-                </div>
-              </CardHeader>
-              {stealthEnabled && (
+                  <CardTitle className="text-xl">{mode.name}</CardTitle>
+                  <CardDescription className="text-base">
+                    {mode.description}
+                  </CardDescription>
+                </CardHeader>
                 <CardContent>
-                  <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                    <p className="text-sm text-primary font-medium mb-2">⚠️ Stealth Mode Active</p>
-                    <p className="text-sm text-muted-foreground">
-                      The app will now appear as a {stealthModes.find(m => m.id === stealthMode)?.title}. 
-                      Use your panic code to return to normal mode.
-                    </p>
+                  <div className="space-y-2">
+                    {mode.features.map((feature, index) => (
+                      <div key={index} className="flex items-center gap-2 text-sm">
+                        <div className="w-1.5 h-1.5 bg-current rounded-full" />
+                        {feature}
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
-              )}
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Theme Selection */}
+      <section className="py-16 bg-card/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Visual Themes</h2>
+            <p className="text-lg text-muted-foreground">
+              Customize the visual appearance to match your preference
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+            {themes.map((theme) => (
+              <Card 
+                key={theme.id}
+                className={`cursor-pointer transition-all duration-300 ${
+                  selectedTheme === theme.id ? 'ring-2 ring-primary scale-105' : 'hover:scale-102'
+                }`}
+                onClick={() => setSelectedTheme(theme.id)}
+              >
+                <CardContent className="p-4">
+                  <div className={`w-full h-20 rounded-lg mb-3 ${theme.preview}`} />
+                  <h3 className="font-semibold text-sm mb-1">{theme.name}</h3>
+                  <p className="text-xs text-muted-foreground">{theme.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Stealth Applications */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">
+              <span className="text-foreground">Stealth </span>
+              <span className="gradient-neon bg-clip-text text-transparent">Disguises</span>
+            </h2>
+            <p className="text-lg text-muted-foreground">
+              Hide SecureChat behind innocent-looking applications
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {stealthApps.map((app) => (
+              <Card key={app.id} className="bg-card/50 backdrop-blur-sm hover:shadow-lg transition-all duration-300">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-yellow-500/10 flex items-center justify-center">
+                      <app.icon className="h-5 w-5 text-yellow-500" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">{app.name}</CardTitle>
+                      <Badge variant="secondary" className="text-xs">Stealth</Badge>
+                    </div>
+                  </div>
+                  <CardDescription>{app.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <p className="text-sm font-medium mb-1">Preview:</p>
+                    <p className="text-sm text-muted-foreground">{app.preview}</p>
+                  </div>
+                  <div className="p-3 bg-yellow-500/5 border border-yellow-500/20 rounded-lg">
+                    <p className="text-xs font-medium text-yellow-600 mb-1">Secret Access:</p>
+                    <p className="text-xs text-muted-foreground">{app.access}</p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => activateStealth(app.id)}
+                  >
+                    Activate Disguise
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Device Preview */}
+      <section className="py-16 bg-card/30">
+        <div className="container mx-auto px-4">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4">Device Preview</h2>
+              <p className="text-lg text-muted-foreground">
+                See how your selected mode and theme will look across different devices
+              </p>
+            </div>
+
+            <div className="flex justify-center gap-4 mb-8">
+              <Button 
+                variant={previewMode === 'desktop' ? 'default' : 'outline'}
+                onClick={() => setPreviewMode('desktop')}
+              >
+                <Monitor className="mr-2 h-4 w-4" />
+                Desktop
+              </Button>
+              <Button 
+                variant={previewMode === 'tablet' ? 'default' : 'outline'}
+                onClick={() => setPreviewMode('tablet')}
+              >
+                <Tablet className="mr-2 h-4 w-4" />
+                Tablet
+              </Button>
+              <Button 
+                variant={previewMode === 'mobile' ? 'default' : 'outline'}
+                onClick={() => setPreviewMode('mobile')}
+              >
+                <Smartphone className="mr-2 h-4 w-4" />
+                Mobile
+              </Button>
+            </div>
+
+            <Card className="bg-card/80 backdrop-blur-sm">
+              <CardContent className="p-8">
+                <div className={`
+                  mx-auto rounded-lg border-2 border-border bg-gradient-to-br transition-all duration-300
+                  ${previewMode === 'desktop' ? 'w-full h-96' : ''}
+                  ${previewMode === 'tablet' ? 'w-3/4 h-80' : ''}
+                  ${previewMode === 'mobile' ? 'w-64 h-96' : ''}
+                  ${themes.find(t => t.id === selectedTheme)?.preview}
+                `}>
+                  <div className="p-6 h-full flex flex-col items-center justify-center text-center">
+                    <div className="mb-4">
+                      {appModes.find(m => m.id === selectedMode)?.icon && (
+                        <div className="w-16 h-16 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center mb-4">
+                          {React.createElement(appModes.find(m => m.id === selectedMode)!.icon, { 
+                            className: "h-8 w-8 text-white" 
+                          })}
+                        </div>
+                      )}
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-2">
+                      {appModes.find(m => m.id === selectedMode)?.name}
+                    </h3>
+                    <p className="text-white/80 text-sm mb-4">
+                      {themes.find(t => t.id === selectedTheme)?.name} Theme
+                    </p>
+                    <Badge variant="secondary" className="bg-white/20 text-white">
+                      {previewMode.charAt(0).toUpperCase() + previewMode.slice(1)} View
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
             </Card>
           </div>
         </div>
       </section>
 
-      {/* Stealth Mode Options */}
-      <section className="py-16 bg-card/30">
+      {/* Settings & Apply */}
+      <section className="py-16">
         <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">
-                <span className="text-foreground">Choose Your </span>
-                <span className="gradient-neon bg-clip-text text-transparent">Disguise</span>
-              </h2>
-              <p className="text-lg text-muted-foreground">
-                Select how SecureChat should appear when stealth mode is active
-              </p>
-            </div>
+          <div className="max-w-2xl mx-auto">
+            <Card className="bg-card/80 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-2xl text-center">Apply Settings</CardTitle>
+                <CardDescription className="text-center">
+                  Confirm your mode and theme selection
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <p className="text-sm font-medium mb-1">Selected Mode:</p>
+                    <p className="font-semibold">{appModes.find(m => m.id === selectedMode)?.name}</p>
+                  </div>
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <p className="text-sm font-medium mb-1">Selected Theme:</p>
+                    <p className="font-semibold">{themes.find(t => t.id === selectedTheme)?.name}</p>
+                  </div>
+                </div>
 
-            <div className="grid md:grid-cols-3 gap-6">
-              {stealthModes.map((mode) => (
-                <Card 
-                  key={mode.id} 
-                  className={`group cursor-pointer transition-all duration-300 ${
-                    stealthMode === mode.id 
-                      ? 'border-primary bg-primary/5 shadow-lg shadow-primary/20' 
-                      : 'bg-card/50 backdrop-blur-sm hover:shadow-lg hover:shadow-primary/10'
-                  }`}
-                  onClick={() => setStealthMode(mode.id)}
+                <div className="flex items-center justify-between p-4 bg-yellow-500/5 border border-yellow-500/20 rounded-lg">
+                  <div>
+                    <p className="font-medium">Enable Stealth Mode</p>
+                    <p className="text-sm text-muted-foreground">Activate when privacy is critical</p>
+                  </div>
+                  <Switch 
+                    checked={stealthEnabled}
+                    onCheckedChange={setStealthEnabled}
+                  />
+                </div>
+
+                <Button 
+                  variant="cyber" 
+                  className="w-full" 
+                  size="lg"
+                  onClick={applyMode}
                 >
-                  <CardHeader>
-                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                      <mode.icon className="h-6 w-6 text-primary" />
-                    </div>
-                    <CardTitle className="text-xl flex items-center justify-between">
-                      {mode.title}
-                      {stealthMode === mode.id && (
-                        <Badge variant="secondary" className="bg-primary/10 text-primary">
-                          Selected
-                        </Badge>
-                      )}
-                    </CardTitle>
-                    <CardDescription className="text-base">
-                      {mode.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="p-3 bg-muted/20 rounded-lg border border-border">
-                      <p className="text-sm text-muted-foreground">
-                        Preview: {mode.preview}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Advanced Security Settings */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-3xl font-bold mb-8 text-center">
-              <span className="text-foreground">Advanced </span>
-              <span className="gradient-neon bg-clip-text text-transparent">Security</span>
-            </h2>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Decoy Mode */}
-              <Card className="bg-card/50 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    Decoy Chat Mode
-                    <Switch 
-                      checked={decoyEnabled}
-                      onCheckedChange={setDecoyEnabled}
-                      className="data-[state=checked]:bg-accent"
-                    />
-                  </CardTitle>
-                  <CardDescription>
-                    Show fake conversations if forced to open the app
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground">
-                      When enabled, opening the app under duress will show pre-generated 
-                      innocent conversations instead of real chats.
-                    </p>
-                    {decoyEnabled && (
-                      <div className="p-3 bg-accent/5 border border-accent/20 rounded-lg">
-                        <p className="text-sm text-accent font-medium">
-                          Decoy conversations ready
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Panic Code */}
-              <Card className="bg-card/50 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle>Panic Code Setup</CardTitle>
-                  <CardDescription>
-                    Set a code to instantly activate stealth or decoy mode
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <Input
-                      type="password"
-                      placeholder="Enter panic code..."
-                      value={panicCode}
-                      onChange={(e) => setPanicCode(e.target.value)}
-                      className="bg-background/50"
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      Type this code in any stealth mode to return to normal SecureChat.
-                      Keep it memorable but not obvious.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Security Features */}
-      <section className="py-16 bg-card/30">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-3xl font-bold mb-8 text-center">Security Features</h2>
-            
-            <div className="grid md:grid-cols-2 gap-6">
-              {securityFeatures.map((feature, index) => (
-                <Card key={index} className="bg-card/50 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-3">
-                      <span className="text-2xl">{feature.icon}</span>
-                      {feature.title}
-                    </CardTitle>
-                    <CardDescription className="text-base">
-                      {feature.description}
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Test Stealth Mode */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto text-center space-y-6">
-            <h2 className="text-3xl font-bold">Test Your Stealth Setup</h2>
-            <p className="text-lg text-muted-foreground">
-              Verify your stealth mode configuration before relying on it for security.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                variant="cyber" 
-                size="lg"
-                onClick={() => setStealthEnabled(true)}
-                disabled={!panicCode}
-              >
-                <EyeOff className="mr-2 h-5 w-5" />
-                Activate Stealth Mode
-              </Button>
-              <Button variant="neon" size="lg" asChild>
-                <Link to="/create">
-                  <Shield className="mr-2 h-5 w-5" />
-                  Start Secure Chat
-                </Link>
-              </Button>
-            </div>
-            {!panicCode && (
-              <p className="text-sm text-destructive">
-                Set a panic code before testing stealth mode
-              </p>
-            )}
+                  <Palette className="mr-2 h-5 w-5" />
+                  Apply Settings
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
