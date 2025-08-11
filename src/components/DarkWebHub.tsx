@@ -65,6 +65,7 @@ const DarkWebHub = () => {
   const [terminalLines, setTerminalLines] = useState<string[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [matrixActive, setMatrixActive] = useState(true);
+  const [pulseIntensity, setPulseIntensity] = useState(1);
 
   const [marketListings] = useState<MarketListing[]>([
     {
@@ -557,45 +558,120 @@ const DarkWebHub = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-purple-900/20 to-black/50 border-purple-500/30 hover:border-purple-400/50 transition-all cursor-pointer group">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-purple-400">
-                    <Package className="h-5 w-5" />
-                    Underground Market
+              <Card className="bg-gradient-to-br from-purple-900/30 to-black/70 border-purple-500/40 hover:border-purple-400/60 transition-all duration-500 cursor-pointer group relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-violet-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                <div className="absolute top-2 right-2">
+                  <div className="h-3 w-3 bg-purple-500 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
+                </div>
+                <CardHeader className="relative">
+                  <CardTitle className="flex items-center gap-3 text-purple-400 group-hover:text-purple-300 transition-colors">
+                    <div className="relative">
+                      <Package className="h-6 w-6 group-hover:animate-bounce" />
+                      <div className="absolute inset-0 h-6 w-6 border border-purple-500/50 rounded-full animate-ping" style={{ animationDelay: '0.3s' }} />
+                    </div>
+                    <span className="text-lg font-bold">UNDERGROUND MARKET</span>
                   </CardTitle>
-                  <CardDescription>
-                    Anonymous marketplace for digital services
+                  <CardDescription className="text-purple-300/70">
+                    Anonymous digital bazaar with escrow protection and encrypted communications
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <Button 
-                    variant="secondary" 
-                    className="w-full bg-purple-500/20 hover:bg-purple-500/30" 
+                <CardContent className="relative">
+                  <div className="mb-4 space-y-2">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-purple-400">Active Vendors:</span>
+                      <span className="text-purple-300 font-mono">1,247</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-purple-400">Escrow Security:</span>
+                      <span className="text-purple-300 font-mono">100%</span>
+                    </div>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    className="w-full bg-purple-600/80 hover:bg-purple-500/90 border border-purple-500/50 shadow-lg shadow-purple-500/20 text-purple-100"
                     onClick={accessMarketplace}
                   >
-                    Access Marketplace
+                    <span className="flex items-center gap-2">
+                      <Bitcoin className="h-4 w-4" />
+                      ACCESS MARKETPLACE
+                    </span>
                   </Button>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-green-900/20 to-black/50 border-green-500/30 hover:border-green-400/50 transition-all cursor-pointer group">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-green-400">
-                    <MapPin className="h-5 w-5" />
-                    Dead Drops
+              <Card className="bg-gradient-to-br from-green-900/30 to-black/70 border-green-500/40 hover:border-green-400/60 transition-all duration-500 cursor-pointer group relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                <div className="absolute top-2 right-2">
+                  <div className="h-3 w-3 bg-green-500 rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
+                </div>
+                <CardHeader className="relative">
+                  <CardTitle className="flex items-center gap-3 text-green-400 group-hover:text-green-300 transition-colors">
+                    <div className="relative">
+                      <MapPin className="h-6 w-6 group-hover:animate-pulse" />
+                      <div className="absolute inset-0 h-6 w-6 border border-green-500/50 rounded-full animate-ping" style={{ animationDelay: '0.7s' }} />
+                    </div>
+                    <span className="text-lg font-bold">DEAD DROPS</span>
                   </CardTitle>
-                  <CardDescription>
-                    Physical location-based secure messaging
+                  <CardDescription className="text-green-300/70">
+                    Physical location-based secure messaging with GPS encryption
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <Button 
-                    variant="secondary" 
-                    className="w-full bg-green-500/20 hover:bg-green-500/30" 
+                <CardContent className="relative">
+                  <div className="mb-4 space-y-2">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-green-400">Active Drops:</span>
+                      <span className="text-green-300 font-mono">2 LIVE</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-green-400">Encryption:</span>
+                      <span className="text-green-300 font-mono">AES-256</span>
+                    </div>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    className="w-full bg-green-600/80 hover:bg-green-500/90 border border-green-500/50 shadow-lg shadow-green-500/20 text-green-100"
                     onClick={createDeadDrop}
                   >
-                    Create Drop Point
+                    <span className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      CREATE DROP POINT
+                    </span>
                   </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Additional Quick Actions */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+              <Card className="bg-gradient-to-br from-cyan-900/20 to-black/50 border-cyan-500/30 hover:border-cyan-400/50 transition-all duration-300 cursor-pointer group">
+                <CardContent className="p-4 text-center">
+                  <Wifi className="h-8 w-8 mx-auto text-cyan-400 mb-2 group-hover:animate-pulse" />
+                  <div className="text-sm font-semibold text-cyan-400">MESH NETWORK</div>
+                  <div className="text-xs text-cyan-300/70 mt-1">{meshConnections} nodes</div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-yellow-900/20 to-black/50 border-yellow-500/30 hover:border-yellow-400/50 transition-all duration-300 cursor-pointer group">
+                <CardContent className="p-4 text-center">
+                  <Bitcoin className="h-8 w-8 mx-auto text-yellow-400 mb-2 group-hover:animate-bounce" />
+                  <div className="text-sm font-semibold text-yellow-400">CRYPTO MIXER</div>
+                  <div className="text-xs text-yellow-300/70 mt-1">Anonymous</div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-indigo-900/20 to-black/50 border-indigo-500/30 hover:border-indigo-400/50 transition-all duration-300 cursor-pointer group">
+                <CardContent className="p-4 text-center">
+                  <Eye className="h-8 w-8 mx-auto text-indigo-400 mb-2 group-hover:animate-pulse" />
+                  <div className="text-sm font-semibold text-indigo-400">STEGANOGRAPHY</div>
+                  <div className="text-xs text-indigo-300/70 mt-1">Hide data</div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-orange-900/20 to-black/50 border-orange-500/30 hover:border-orange-400/50 transition-all duration-300 cursor-pointer group">
+                <CardContent className="p-4 text-center">
+                  <Terminal className="h-8 w-8 mx-auto text-orange-400 mb-2 group-hover:animate-pulse" />
+                  <div className="text-sm font-semibold text-orange-400">TERMINAL</div>
+                  <div className="text-xs text-orange-300/70 mt-1">Command line</div>
                 </CardContent>
               </Card>
             </div>
@@ -812,50 +888,215 @@ const DarkWebHub = () => {
             <SteganographyTool />
           </TabsContent>
 
-          {/* Terminal Tab */}
+          {/* Enhanced Terminal Tab */}
           <TabsContent value="terminal" className="space-y-6">
-            <Card className="bg-black border-green-500/50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-green-500 font-mono">
-                  <Terminal className="h-5 w-5" />
-                  [root@underground]#
+            <Card className="bg-black/95 border-green-500/50 shadow-2xl shadow-green-500/20">
+              <CardHeader className="border-b border-green-500/30">
+                <CardTitle className="flex items-center gap-3 text-green-500 font-mono">
+                  <div className="relative">
+                    <Terminal className="h-6 w-6 animate-pulse" />
+                    <div className="absolute inset-0 h-6 w-6 border border-green-500/50 rounded animate-ping" />
+                  </div>
+                  <span>[root@underground-hub]#</span>
+                  <div className="ml-auto flex items-center gap-2">
+                    <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
+                    <span className="text-xs">SECURE SHELL</span>
+                  </div>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="font-mono text-green-500 space-y-2 text-sm">
-                  <div>$ tor --version</div>
-                  <div className="text-green-400">Tor version 0.4.7.13 (git-2f8a3f1)</div>
-                  <div>$ onion-routing status</div>
-                  <div className="text-green-400">[✓] 3-hop circuit established</div>
-                  <div className="text-green-400">[✓] End-to-end encryption active</div>
-                  <div className="text-green-400">[✓] IP address masked</div>
-                  <div>$ mesh-network peers</div>
-                  <div className="text-green-400">Connected peers: {meshConnections}</div>
-                  <div>$ encryption-status</div>
-                  <div className="text-green-400">AES-256-GCM: ACTIVE</div>
-                  <div className="text-green-400">RSA-4096: ACTIVE</div>
-                  <div className="text-green-400">ChaCha20-Poly1305: ACTIVE</div>
-                  <div>$ steganography ready</div>
-                  <div className="text-green-400">[✓] Image hiding protocols loaded</div>
-                  <div className="text-green-400">[✓] Audio masking available</div>
-                  <div>$ _</div>
+              <CardContent className="p-6">
+                <div className="space-y-6">
+                  {/* System Information */}
+                  <div className="font-mono text-green-500 space-y-1 text-sm">
+                    <div className="text-green-400"># SYSTEM BOOT SEQUENCE COMPLETE</div>
+                    <div className="text-green-400"># UNDERGROUND HUB v2.1.0 - OPERATIONAL</div>
+                    <div className="border-t border-green-500/30 my-3"></div>
+                  </div>
+
+                  {/* Live Command Output */}
+                  <div className="font-mono text-green-500 space-y-2 text-sm max-h-64 overflow-y-auto">
+                    <div>$ tor --version</div>
+                    <div className="text-green-400 ml-4">Tor version 0.4.7.13 (git-2f8a3f1) - SECURE</div>
+                    <div className="text-green-400 ml-4">Platform: Linux x86_64</div>
+
+                    <div className="mt-3">$ onion-routing status</div>
+                    <div className="text-green-400 ml-4">[✓] 3-hop circuit established</div>
+                    <div className="text-green-400 ml-4">[✓] End-to-end encryption active (AES-256)</div>
+                    <div className="text-green-400 ml-4">[✓] IP address masked - {Math.floor(Math.random() * 255)}.{Math.floor(Math.random() * 255)}.{Math.floor(Math.random() * 255)}.{Math.floor(Math.random() * 255)}</div>
+                    <div className="text-green-400 ml-4">[✓] DNS requests routed through Tor</div>
+
+                    <div className="mt-3">$ mesh-network status</div>
+                    <div className="text-green-400 ml-4">Connected peers: {meshConnections}</div>
+                    <div className="text-green-400 ml-4">Network latency: {Math.floor(Math.random() * 50 + 10)}ms</div>
+                    <div className="text-green-400 ml-4">Bandwidth: {Math.floor(Math.random() * 100 + 50)} MB/s</div>
+
+                    <div className="mt-3">$ encryption-suite status</div>
+                    <div className="text-green-400 ml-4">AES-256-GCM: ACTIVE</div>
+                    <div className="text-green-400 ml-4">RSA-4096: ACTIVE</div>
+                    <div className="text-green-400 ml-4">ChaCha20-Poly1305: ACTIVE</div>
+                    <div className="text-green-400 ml-4">ECDH P-384: ACTIVE</div>
+
+                    <div className="mt-3">$ steganography modules</div>
+                    <div className="text-green-400 ml-4">[✓] Image hiding protocols loaded</div>
+                    <div className="text-green-400 ml-4">[✓] Audio masking available</div>
+                    <div className="text-green-400 ml-4">[✓] Video embedding ready</div>
+                    <div className="text-green-400 ml-4">[✓] Text cipher modules active</div>
+
+                    <div className="mt-3">$ crypto-mixer status</div>
+                    <div className="text-green-400 ml-4">Bitcoin tumbler: ONLINE</div>
+                    <div className="text-green-400 ml-4">Monero mixer: ONLINE</div>
+                    <div className="text-green-400 ml-4">Zcash anonymizer: ONLINE</div>
+
+                    <div className="mt-3">$ deadrop-network scan</div>
+                    <div className="text-green-400 ml-4">Active drops: {deadDrops.length}</div>
+                    <div className="text-green-400 ml-4">Encrypted coordinates: SECURED</div>
+
+                    <div className="mt-3">$ system-security audit</div>
+                    <div className="text-green-400 ml-4">[✓] All connections encrypted</div>
+                    <div className="text-green-400 ml-4">[✓] No logs retained</div>
+                    <div className="text-green-400 ml-4">[✓] Memory wiped on disconnect</div>
+                    <div className="text-green-400 ml-4">[✓] Kill switch armed</div>
+
+                    {terminalLines.map((line, index) => (
+                      <div key={index} className="text-green-400 ml-4 animate-fadeIn">{line}</div>
+                    ))}
+
+                    <div className="flex items-center mt-4">
+                      <span>$ </span>
+                      <div className="ml-1 h-4 w-2 bg-green-500 animate-pulse"></div>
+                    </div>
+                  </div>
+
+                  {/* System Resources */}
+                  <div className="border-t border-green-500/30 pt-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="text-center">
+                        <div className="text-green-500 font-mono text-lg">{systemStats.cpu}%</div>
+                        <div className="text-green-400 text-xs">CPU USAGE</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-green-500 font-mono text-lg">{systemStats.ram}%</div>
+                        <div className="text-green-400 text-xs">MEMORY</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-green-500 font-mono text-lg">{systemStats.network}%</div>
+                        <div className="text-green-400 text-xs">NETWORK</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-green-500 font-mono text-lg">{meshConnections}</div>
+                        <div className="text-green-400 text-xs">NODES</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
 
-        {/* Warning Footer */}
-        <Card className="bg-red-900/10 border-red-500/20">
-          <CardContent className="p-4 text-center">
-            <AlertTriangle className="h-8 w-8 text-red-500 mx-auto mb-2" />
-            <p className="text-red-400 font-semibold">⚠️ WARNING: UNDERGROUND ZONE ⚠️</p>
-            <p className="text-sm text-muted-foreground mt-2">
-              These tools are for educational purposes only. Use responsibly and in accordance with local laws.
-            </p>
+        {/* Enhanced Warning Footer */}
+        <Card className="bg-gradient-to-r from-red-900/20 to-orange-900/20 border-red-500/30 relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+          <div className="absolute inset-0">
+            <div className="h-full w-1 bg-red-500 animate-pulse" />
+            <div className="absolute top-0 right-0 h-full w-1 bg-red-500 animate-pulse" style={{ animationDelay: '0.5s' }} />
+          </div>
+          <CardContent className="p-6 text-center relative">
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <AlertTriangle className="h-10 w-10 text-red-500 animate-pulse" />
+              <div className="text-2xl font-bold text-red-400 animate-pulse">⚠️ DANGER ZONE ⚠️</div>
+              <AlertTriangle className="h-10 w-10 text-red-500 animate-pulse" style={{ animationDelay: '0.5s' }} />
+            </div>
+            <div className="space-y-2">
+              <p className="text-red-400 font-bold text-lg">
+                MAXIMUM SECURITY UNDERGROUND OPERATIONS
+              </p>
+              <p className="text-red-300/80 text-sm max-w-2xl mx-auto">
+                These advanced cryptographic and anonymity tools are provided for educational and legitimate privacy purposes only.
+                Users assume full responsibility for compliance with applicable laws and regulations.
+              </p>
+              <div className="flex items-center justify-center gap-6 mt-4 text-xs">
+                <div className="flex items-center gap-1">
+                  <Shield className="h-4 w-4 text-green-500" />
+                  <span className="text-green-400">ENCRYPTED</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Eye className="h-4 w-4 text-purple-500" />
+                  <span className="text-purple-400">ANONYMOUS</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Lock className="h-4 w-4 text-blue-500" />
+                  <span className="text-blue-400">SECURE</span>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Custom Styles */}
+      <style jsx>{`
+        @keyframes scan {
+          0% { transform: translateY(-100vh); }
+          100% { transform: translateY(100vh); }
+        }
+
+        @keyframes gradient {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes typewriter {
+          from { width: 0; }
+          to { width: 100%; }
+        }
+
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+
+        .animate-gradient {
+          animation: gradient 3s ease infinite;
+        }
+
+        .animate-fadeIn {
+          animation: fadeIn 0.5s ease-out;
+        }
+
+        .animate-typewriter {
+          overflow: hidden;
+          white-space: nowrap;
+          animation: typewriter 2s steps(40, end);
+        }
+
+        .animate-spin-slow {
+          animation: spin-slow 3s linear infinite;
+        }
+
+        .bg-300% {
+          background-size: 300% 300%;
+        }
+
+        /* Glow effects */
+        .glow-red {
+          box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+        }
+
+        .glow-green {
+          box-shadow: 0 0 20px rgba(34, 197, 94, 0.5);
+        }
+
+        .glow-purple {
+          box-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+        }
+      `}</style>
     </div>
   );
 };
