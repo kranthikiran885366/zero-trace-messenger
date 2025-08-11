@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Palette, Eye, EyeOff, Calculator, FileText, Calendar, Camera, Music, Gamepad2, Monitor, Smartphone, Tablet } from 'lucide-react';
+import { Palette, Eye, EyeOff, Calculator, FileText, Calendar, Camera, Music, Gamepad2, Monitor, Smartphone, Tablet, ArrowLeft, Home, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,9 +7,11 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import Navigation from '@/components/Navigation';
+import { useNavigate } from 'react-router-dom';
 
 const AppModes = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [selectedMode, setSelectedMode] = useState('secure');
   const [selectedTheme, setSelectedTheme] = useState('cyber');
   const [stealthEnabled, setStealthEnabled] = useState(false);
@@ -149,6 +151,31 @@ const AppModes = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
+
+      {/* Back Button Header */}
+      <div className="container mx-auto px-4 pt-6">
+        <div className="flex items-center gap-4 mb-6">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => navigate('/')}
+            className="bg-primary/10 border-primary/50 hover:bg-primary/20 hover:border-primary/70 text-primary transition-all duration-300 shadow-lg shadow-primary/20"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            BACK TO HOME
+          </Button>
+
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => navigate('/features')}
+            className="bg-accent/10 border-accent/50 hover:bg-accent/20 hover:border-accent/70 text-accent transition-all duration-300 shadow-lg shadow-accent/20"
+          >
+            <Settings className="h-5 w-5 mr-2" />
+            VIEW FEATURES
+          </Button>
+        </div>
+      </div>
       
       {/* Hero Section */}
       <section className="py-16 bg-gradient-to-br from-cyber-darker via-background to-cyber-dark cyber-grid">
