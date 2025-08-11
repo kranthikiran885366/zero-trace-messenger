@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Lock, Shield, ArrowRight, QrCode, Copy } from 'lucide-react';
+import { Lock, Shield, ArrowRight, QrCode, Copy, ArrowLeft, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -68,6 +68,31 @@ const JoinRoom = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
+
+      {/* Back Button Header */}
+      <div className="container mx-auto px-4 pt-6">
+        <div className="flex items-center gap-4 mb-6">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => navigate('/')}
+            className="bg-primary/10 border-primary/50 hover:bg-primary/20 hover:border-primary/70 text-primary transition-all duration-300 shadow-lg shadow-primary/20"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            BACK TO HOME
+          </Button>
+
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => navigate('/create')}
+            className="bg-accent/10 border-accent/50 hover:bg-accent/20 hover:border-accent/70 text-accent transition-all duration-300 shadow-lg shadow-accent/20"
+          >
+            <Lock className="h-5 w-5 mr-2" />
+            CREATE ROOM
+          </Button>
+        </div>
+      </div>
       
       {/* Hero Section */}
       <section className="py-16 bg-gradient-to-br from-cyber-darker via-background to-cyber-dark cyber-grid">
