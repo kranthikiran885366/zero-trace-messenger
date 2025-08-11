@@ -1,11 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
-import { Video, VideoOff, Mic, MicOff, Phone, PhoneOff, Settings, Shield, Monitor, Users } from 'lucide-react';
+import { Video, VideoOff, Mic, MicOff, Phone, PhoneOff, Settings, Shield, Monitor, Users, ArrowLeft, Home, Share2, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 const VideoCallInterface = () => {
+  const navigate = useNavigate();
+  const { roomId } = useParams();
+  const { toast } = useToast();
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isCallActive, setIsCallActive] = useState(false);
@@ -53,6 +58,17 @@ const VideoCallInterface = () => {
     setIsAudioEnabled(!isAudioEnabled);
   };
 
+  const copyRoomLink = () => {
+    const link = `${window.location.origin}/video/${roomId}`;
+    navigator.clipboard.writeText(link);
+    toast({
+      title: "Video Link Copied",
+      description: "Share this link to invite others to the video call"
+    });
+  };
+
+  const callUsers: any[] = []; // Placeholder for call participants
+
   return (
     <div className="h-screen bg-background flex flex-col">
       {/* Header */}
@@ -86,14 +102,33 @@ const VideoCallInterface = () => {
                 </div>
               )}
               <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(`/chat/${roomId}`)}
+                  className="bg-primary/10 border-primary/50 hover:bg-primary/20 text-primary"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-1" />
+                  BACK TO CHAT
+                </Button>
                 <Button variant="ghost" size="sm" onClick={copyRoomLink}>
                   <Share2 className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => navigate(`/chat/${roomId}`)}>
-                  <MessageSquare className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => setShowSettings(!showSettings)}>
+                <Button variant="ghost" size="sm" onClick={() => setShowSettings && setShowSettings(!showSettings)}>
                   <Settings className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (window.confirm('⚠️ Are you sure you want to leave the video call?')) {
+                      navigate('/');
+                    }
+                  }}
+                  className="bg-red-900/20 border-red-500/50 hover:bg-red-800/30 text-red-400"
+                >
+                  <PhoneOff className="h-4 w-4 mr-1" />
+                  LEAVE
                 </Button>
               </div>
             </div>
