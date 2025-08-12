@@ -2,8 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const Room = require('../models/Room');
 const Message = require('../models/Message');
-const authMiddleware = require('../middleware/auth');
-const { validateRoomSettings } = require('../utils/validation');
+const { verifyToken } = require('../middleware/auth');
 const router = express.Router();
 
 // Create a new room
