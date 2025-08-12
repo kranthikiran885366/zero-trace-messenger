@@ -102,6 +102,9 @@ const Index = () => {
 
     const eventSource = connectSSE();
 
+    // Set initial status
+    setConnectionStatus(eventSource ? 'connecting' : 'error');
+
     // Track if we have an active HTTP request to prevent overlaps
     let isHttpRequestActive = false;
 
