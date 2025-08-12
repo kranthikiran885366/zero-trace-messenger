@@ -162,9 +162,9 @@ const Index = () => {
       }
     };
 
-    // Initial load and fallback polling
-    loadStatsHTTP();
-    const httpInterval = setInterval(loadStatsHTTP, 5000);
+    // Initial load and fallback polling (less frequent to prevent errors)
+    setTimeout(loadStatsHTTP, 1000); // Delay initial load by 1 second
+    const httpInterval = setInterval(loadStatsHTTP, 10000); // Increased to 10 seconds
 
     // Cleanup
     return () => {
