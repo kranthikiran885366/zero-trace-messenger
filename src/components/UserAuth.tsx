@@ -20,7 +20,7 @@ const UserAuth = () => {
   const [nickname, setNickname] = useState('');
   const [showSettings, setShowSettings] = useState(false);
 
-  const handleCreateSession = () => {
+  const handleCreateSession = async () => {
     if (!nickname.trim()) {
       toast({
         title: "Nickname Required",
@@ -30,12 +30,20 @@ const UserAuth = () => {
       return;
     }
 
-    createSession(nickname.trim());
-    setIsCreatingSession(false);
-    toast({
-      title: "Anonymous Session Created",
-      description: `Welcome, ${nickname}! Your session is now active.`,
-    });
+    try {
+      await createAnonymousSession(nickname.trim(), {
+        theme: 'cyber',
+        autoDeleteMessages: true,
+        enableNotifications: false
+      });
+      setIsCreatingSession(false);
+      toast({
+        title: "Anonymous Session Created",
+        description: `Welcome, ${nickname}! Your session is now active.`,
+      });
+    } catch (error) {
+      // Error already handled by context
+    }
   };
 
   const updatePreference = (key: keyof UserSession['preferences'], value: any) => {
