@@ -69,11 +69,37 @@ const sanitizeInput = (input) => {
   return input.trim().replace(/[<>]/g, '');
 };
 
+/**
+ * Validate room settings
+ */
+const validateRoomSettings = (roomData) => {
+  const { name, description, settings = {} } = roomData;
+  const errors = [];
+
+  if (!name || typeof name !== 'string' || name.trim().length < 2) {
+    errors.push('Room name must be at least 2 characters long');
+  }
+
+  if (name && name.length > 100) {
+    errors.push('Room name must be less than 100 characters');
+  }
+
+  if (description && typeof description === 'string' && description.length > 500) {
+    errors.push('Room description must be less than 500 characters');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
 module.exports = {
   validateEmail,
   validatePassword,
   generateFingerprint,
   validateNickname,
   validateRoomCode,
-  sanitizeInput
+  sanitizeInput,
+  validateRoomSettings
 };
