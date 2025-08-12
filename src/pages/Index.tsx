@@ -142,8 +142,10 @@ const Index = () => {
     // Cleanup
     return () => {
       clearInterval(httpInterval);
-      realTimeClient.off('stats_update', handleStatsUpdate);
-      realTimeClient.off('connection', handleConnectionChange);
+      if (eventSource) {
+        console.log('🔌 Closing SSE connection');
+        eventSource.close();
+      }
     };
   }, []);
 
