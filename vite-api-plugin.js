@@ -156,8 +156,90 @@ export function apiPlugin() {
         }
       });
       
+      // Add WebSocket endpoint for real-time updates
+      server.ws('/ws', {
+        message(ws, data) {
+          try {
+            const message = JSON.parse(data.toString());
+            console.log('📨 WebSocket message received:', message);
+
+            switch (message.type) {
+              case 'ping':
+                ws.send(JSON.stringify({
+                  type: 'pong',
+                  data: { timestamp: Date.now() },
+                  timestamp: Date.now()
+                }));
+                break;
+
+              case 'request_stats':
+                const stats = db.getStats();
+                ws.send(JSON.stringify({
+                  type: 'stats_update',
+                  data: {
+                    activeUsers: stats.activeUsers,
+                    totalRooms: stats.totalRooms,
+                    messagesSent: stats.messagesSent,
+                    filesShared: stats.filesShared,
+                    onlineUsers: stats.onlineUsers
+                  },
+                  timestamp: Date.now()
+                }));
+                break;
+
+              case 'join_room':
+                // Simulate room join
+                ws.send(JSON.stringify({
+                  type: 'room_update',
+                  data: {
+                    roomId: message.data.roomId,
+                    action: 'joined',
+                    message: 'Successfully joined room'
+                  },
+                  timestamp: Date.now()
+                }));
+                break;
+            }
+          } catch (error) {
+            console.error('❌ WebSocket message error:', error);
+          }
+        },
+
+        close(ws) {
+          console.log('🔌 WebSocket connection closed');
+        }
+      });
+
+      // Broadcast stats updates every 3 seconds
+      setInterval(() => {
+        const stats = db.getStats();
+        const message = JSON.stringify({
+          type: 'stats_update',
+          data: {
+            activeUsers: stats.activeUsers,
+            totalRooms: stats.totalRooms,
+            messagesSent: stats.messagesSent,
+            filesShared: stats.filesShared,
+            onlineUsers: stats.onlineUsers
+          },
+          timestamp: Date.now()
+        });
+
+        // Broadcast to all connected WebSocket clients
+        server.ws.clients?.forEach((client) => {
+          if (client.readyState === 1) { // WebSocket.OPEN
+            try {
+              client.send(message);
+            } catch (error) {
+              console.error('❌ Failed to broadcast to WebSocket client:', error);
+            }
+          }
+        });
+      }, 3000);
+
       console.log('🔌 Real-time API plugin loaded');
       console.log('📊 Stats available at http://localhost:8080/api/auth/stats');
+      console.log('🔌 WebSocket available at ws://localhost:8080/ws');
     }
   };
 }
