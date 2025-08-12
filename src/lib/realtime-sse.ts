@@ -213,7 +213,10 @@ let realTimeSSEClient: RealTimeSSEClient | null = null;
 
 export const getRealTimeSSEClient = (): RealTimeSSEClient => {
   if (!realTimeSSEClient) {
-    const sseUrl = `${import.meta.env.VITE_API_URL || window.location.origin}/api/events`;
+    // Ensure we use the correct origin for SSE
+    const baseUrl = import.meta.env.VITE_API_URL || window.location.origin;
+    const sseUrl = `${baseUrl}/api/events`;
+    console.log('🔗 Initializing SSE client with URL:', sseUrl);
     realTimeSSEClient = new RealTimeSSEClient(sseUrl);
   }
   return realTimeSSEClient;
