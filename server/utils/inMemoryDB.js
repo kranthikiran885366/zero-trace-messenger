@@ -210,9 +210,49 @@ class InMemoryDB {
   getActiveUsers() {
     const now = Date.now();
     const activeThreshold = 5 * 60 * 1000; // 5 minutes
-    
+
     return Array.from(this.users.values())
       .filter(user => user.isActive && (now - user.lastActive) < activeThreshold);
+  }
+
+  // New methods for API endpoints
+  createUser(userData) {
+    this.users.set(userData.userId, {
+      ...userData,
+      lastActive: Date.now(),
+      isActive: true
+    });
+    this.updateStats();
+    return userData;
+  }
+
+  createRoom(roomData) {
+    this.rooms.set(roomData.roomId, {
+      ...roomData,
+      createdAt: Date.now(),
+      isActive: true,
+      participants: []
+    });
+    this.updateStats();
+    return roomData;
+  }
+
+  getAllRooms() {
+    return Array.from(this.rooms.values())
+      .filter(room => room.isActive)
+      .map(room => ({
+        ...room,
+        participantCount: room.participants ? room.participants.length : 0
+      }));
+  }
+
+  getRoomById(roomId) {
+    return this.rooms.get(roomId);
+  }
+
+  getRoomByCode(roomCode) {
+    return Array.from(this.rooms.values())
+      .find(room => room.roomCode === roomCode && room.isActive);
   }
 }
 
