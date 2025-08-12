@@ -69,7 +69,7 @@ router.post('/create', verifyToken, async (req, res) => {
 });
 
 // Join a room
-router.post('/join', authMiddleware, async (req, res) => {
+router.post('/join', verifyToken, async (req, res) => {
   try {
     const { roomCode, password = null } = req.body;
     
@@ -161,7 +161,7 @@ router.post('/join', authMiddleware, async (req, res) => {
 });
 
 // Leave a room
-router.post('/leave', authMiddleware, async (req, res) => {
+router.post('/leave', verifyToken, async (req, res) => {
   try {
     const { roomId } = req.body;
     
@@ -195,7 +195,7 @@ router.post('/leave', authMiddleware, async (req, res) => {
 });
 
 // Get room information
-router.get('/:roomCode', authMiddleware, async (req, res) => {
+router.get('/:roomCode', verifyToken, async (req, res) => {
   try {
     const { roomCode } = req.params;
     
@@ -230,7 +230,7 @@ router.get('/:roomCode', authMiddleware, async (req, res) => {
 });
 
 // Update room settings (moderators only)
-router.put('/:roomId/settings', authMiddleware, async (req, res) => {
+router.put('/:roomId/settings', verifyToken, async (req, res) => {
   try {
     const { roomId } = req.params;
     const { settings } = req.body;
@@ -286,7 +286,7 @@ router.put('/:roomId/settings', authMiddleware, async (req, res) => {
 });
 
 // Get room messages
-router.get('/:roomId/messages', authMiddleware, async (req, res) => {
+router.get('/:roomId/messages', verifyToken, async (req, res) => {
   try {
     const { roomId } = req.params;
     const { limit = 50, before } = req.query;
@@ -331,7 +331,7 @@ router.get('/:roomId/messages', authMiddleware, async (req, res) => {
 });
 
 // Get room users
-router.get('/:roomId/users', authMiddleware, async (req, res) => {
+router.get('/:roomId/users', verifyToken, async (req, res) => {
   try {
     const { roomId } = req.params;
     
@@ -378,7 +378,7 @@ router.get('/:roomId/users', authMiddleware, async (req, res) => {
 });
 
 // Ban user from room (moderators only)
-router.post('/:roomId/ban', authMiddleware, async (req, res) => {
+router.post('/:roomId/ban', verifyToken, async (req, res) => {
   try {
     const { roomId } = req.params;
     const { userId, reason } = req.body;
@@ -428,7 +428,7 @@ router.post('/:roomId/ban', authMiddleware, async (req, res) => {
 });
 
 // Extend room expiration (owner only)
-router.post('/:roomId/extend', authMiddleware, async (req, res) => {
+router.post('/:roomId/extend', verifyToken, async (req, res) => {
   try {
     const { roomId } = req.params;
     const { additionalTime } = req.body;
@@ -473,7 +473,7 @@ router.post('/:roomId/extend', authMiddleware, async (req, res) => {
 });
 
 // Delete room (owner only)
-router.delete('/:roomId', authMiddleware, async (req, res) => {
+router.delete('/:roomId', verifyToken, async (req, res) => {
   try {
     const { roomId } = req.params;
     
@@ -518,7 +518,7 @@ router.delete('/:roomId', authMiddleware, async (req, res) => {
 });
 
 // Get user's rooms
-router.get('/user/rooms', authMiddleware, async (req, res) => {
+router.get('/user/rooms', verifyToken, async (req, res) => {
   try {
     const rooms = await Room.find({
       'activeUsers.userId': req.user.userId,
