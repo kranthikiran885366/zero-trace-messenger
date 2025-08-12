@@ -229,8 +229,9 @@ export function apiPlugin() {
       };
     }
   }
-  
+
   const db = new RealTimeDB();
+  const roomManager = new RealTimeRoomManager();
   
   return {
     name: 'real-time-api',
