@@ -502,6 +502,18 @@ const Index = () => {
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold mb-4">Live Network Statistics</h2>
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <div className={`w-2 h-2 rounded-full animate-pulse ${
+                  connectionStatus === 'connected' ? 'bg-green-500' :
+                  connectionStatus === 'connecting' ? 'bg-yellow-500' :
+                  connectionStatus === 'error' ? 'bg-red-500' : 'bg-gray-500'
+                }`} />
+                <span className="text-sm text-muted-foreground">
+                  {connectionStatus === 'connected' ? 'Live Updates Active' :
+                   connectionStatus === 'connecting' ? 'Connecting...' :
+                   connectionStatus === 'error' ? 'Connection Issues' : 'Disconnected'}
+                </span>
+              </div>
               <p className="text-muted-foreground">Real-time data from our secure infrastructure</p>
             </div>
             
