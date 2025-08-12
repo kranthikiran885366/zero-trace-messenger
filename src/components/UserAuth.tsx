@@ -152,7 +152,7 @@ const UserAuth = () => {
                   Anonymous Session
                 </CardTitle>
                 <p className="text-lg text-muted-foreground mt-2">
-                  Managing session for {session.nickname}
+                  Managing session for {user.nickname}
                 </p>
               </div>
               <div className="flex items-center gap-2">
