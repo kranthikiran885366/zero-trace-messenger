@@ -46,12 +46,20 @@ const Index = () => {
   useEffect(() => {
     console.log('🚀 Initializing real-time connection...');
 
-    // Simple direct SSE connection with debugging
+    // Robust SSE connection with better error handling
     const connectSSE = () => {
       const sseUrl = `${window.location.origin}/api/events`;
       console.log('📡 Connecting to SSE:', sseUrl);
 
-      const eventSource = new EventSource(sseUrl);
+      let eventSource: EventSource;
+
+      try {
+        eventSource = new EventSource(sseUrl);
+      } catch (error) {
+        console.error('❌ Failed to create SSE connection:', error);
+        setConnectionStatus('error');
+        return null;
+      }
 
       eventSource.onopen = () => {
         console.log('✅ SSE connection opened successfully');
@@ -61,7 +69,6 @@ const Index = () => {
       eventSource.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log('📨 SSE message received:', data);
 
           if (data.type === 'stats_update' && data.data) {
             setStats({
@@ -75,16 +82,19 @@ const Index = () => {
           }
         } catch (error) {
           console.error('❌ Failed to parse SSE message:', error);
-          setConnectionStatus('error');
         }
       };
 
       eventSource.onerror = (error) => {
-        console.error('❌ SSE connection error:', {
-          readyState: eventSource.readyState,
-          error: error
+        console.warn('⚠️ SSE connection error:', {
+          readyState: eventSource.readyState
         });
-        setConnectionStatus(eventSource.readyState === EventSource.CLOSED ? 'disconnected' : 'error');
+
+        if (eventSource.readyState === EventSource.CLOSED) {
+          setConnectionStatus('disconnected');
+        } else {
+          setConnectionStatus('connecting');
+        }
       };
 
       return eventSource;
