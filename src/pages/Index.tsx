@@ -44,7 +44,7 @@ const Index = () => {
   
   // Real-time Server-Sent Events connection for live updates
   useEffect(() => {
-    console.log('�� Initializing real-time connection...');
+    console.log('🚀 Initializing real-time connection...');
 
     // Robust SSE connection with better error handling
     const connectSSE = () => {
@@ -104,6 +104,17 @@ const Index = () => {
 
     // Set initial status
     setConnectionStatus(eventSource ? 'connecting' : 'error');
+
+    // Health check to ensure connection stability
+    const healthCheck = () => {
+      if (eventSource && eventSource.readyState === EventSource.CLOSED) {
+        console.log('🔄 SSE connection lost, falling back to HTTP polling');
+        setConnectionStatus('disconnected');
+      }
+    };
+
+    // Run health check every 30 seconds
+    const healthCheckInterval = setInterval(healthCheck, 30000);
 
     // Track if we have an active HTTP request to prevent overlaps
     let isHttpRequestActive = false;
