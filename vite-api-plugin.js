@@ -368,6 +368,75 @@ export function apiPlugin() {
         }
       });
 
+      // Anonymous authentication endpoint
+      server.middlewares.use('/api/auth/anonymous', (req, res, next) => {
+        if (req.method === 'POST') {
+          try {
+            // Generate anonymous user session
+            const userId = `anon_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+            const fingerprint = `fp_${Date.now()}_${Math.random().toString(36).substr(2, 12)}`;
+
+            const anonymousUser = {
+              _id: userId,
+              userId: userId,
+              nickname: `Anonymous_${Math.floor(Math.random() * 9999)}`,
+              fingerprint: fingerprint,
+              isAnonymous: true,
+              preferences: {
+                theme: 'cyber',
+                autoDeleteMessages: true,
+                enableNotifications: true,
+                showTypingIndicators: false,
+                autoJoinVideo: false,
+                defaultMessageTimer: 300000,
+                preferredQuality: 'medium',
+                enableSteganography: false,
+                enableOnionRouting: false
+              },
+              stats: {
+                roomsJoined: 0,
+                messagesExchanged: 0,
+                filesShared: 0,
+                callMinutes: 0
+              },
+              status: 'online',
+              createdAt: new Date(),
+              lastActive: new Date()
+            };
+
+            const sessionToken = `session_${Date.now()}_${Math.random().toString(36).substr(2, 16)}`;
+
+            console.log('🎭 Anonymous session created:', { userId, nickname: anonymousUser.nickname });
+
+            res.setHeader('Content-Type', 'application/json');
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.end(JSON.stringify({
+              success: true,
+              user: anonymousUser,
+              sessionToken: sessionToken,
+              expiresIn: 3600000, // 1 hour
+              timestamp: new Date().toISOString()
+            }));
+          } catch (error) {
+            console.error('❌ Anonymous auth error:', error);
+            res.statusCode = 500;
+            res.end(JSON.stringify({
+              success: false,
+              error: 'Failed to create anonymous session'
+            }));
+          }
+        } else if (req.method === 'OPTIONS') {
+          // Handle CORS preflight
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+          res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+          res.statusCode = 200;
+          res.end();
+        } else {
+          next();
+        }
+      });
+
       // Real-time rooms list endpoint
       server.middlewares.use('/api/rooms', (req, res, next) => {
         if (req.method === 'GET') {
