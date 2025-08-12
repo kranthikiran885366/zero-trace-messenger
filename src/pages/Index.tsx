@@ -111,8 +111,7 @@ const Index = () => {
 
           if (data.success && data.stats) {
             // Only update if SSE is not connected
-            const sseState = realTimeClient.getConnectionState();
-            if (sseState !== 'connected') {
+            if (!eventSource || eventSource.readyState !== EventSource.OPEN) {
               console.log('📊 Using HTTP fallback for stats:', data.stats);
               setStats({
                 activeUsers: data.stats.activeUsers || 0,
