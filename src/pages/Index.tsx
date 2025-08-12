@@ -41,27 +41,49 @@ const Index = () => {
   
   // Real-time Server-Sent Events connection for live updates
   useEffect(() => {
-    const realTimeClient = getRealTimeSSEClient();
+    console.log('🚀 Initializing real-time connection...');
 
-    // Set up real-time stats updates via SSE
-    const handleStatsUpdate = (newStats: RealTimeStats) => {
-      console.log('📊 Real-time stats update via SSE:', newStats);
-      setStats({
-        activeUsers: newStats.activeUsers,
-        totalRooms: newStats.totalRooms,
-        messagesSent: newStats.messagesSent,
-        filesShared: newStats.filesShared,
-        onlineUsers: newStats.onlineUsers
-      });
+    // Simple direct SSE connection with debugging
+    const connectSSE = () => {
+      const sseUrl = `${window.location.origin}/api/events`;
+      console.log('📡 Connecting to SSE:', sseUrl);
+
+      const eventSource = new EventSource(sseUrl);
+
+      eventSource.onopen = () => {
+        console.log('✅ SSE connection opened successfully');
+      };
+
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log('📨 SSE message received:', data);
+
+          if (data.type === 'stats_update' && data.data) {
+            setStats({
+              activeUsers: data.data.activeUsers || 0,
+              totalRooms: data.data.totalRooms || 0,
+              messagesSent: data.data.messagesSent || 0,
+              filesShared: data.data.filesShared || 0,
+              onlineUsers: data.data.onlineUsers || 0
+            });
+          }
+        } catch (error) {
+          console.error('❌ Failed to parse SSE message:', error);
+        }
+      };
+
+      eventSource.onerror = (error) => {
+        console.error('❌ SSE connection error:', {
+          readyState: eventSource.readyState,
+          error: error
+        });
+      };
+
+      return eventSource;
     };
 
-    const handleConnectionChange = (status: { status: string }) => {
-      console.log('📡 Real-time SSE connection status:', status.status);
-    };
-
-    // Subscribe to real-time events
-    realTimeClient.onStatsUpdate(handleStatsUpdate);
-    realTimeClient.onConnectionChange(handleConnectionChange);
+    const eventSource = connectSSE();
 
     // Fallback HTTP polling in case WebSocket fails
     const loadStatsHTTP = async () => {
