@@ -156,86 +156,54 @@ export function apiPlugin() {
         }
       });
       
-      // Add WebSocket endpoint for real-time updates
-      server.ws('/ws', {
-        message(ws, data) {
-          try {
-            const message = JSON.parse(data.toString());
-            console.log('📨 WebSocket message received:', message);
+      // WebSocket support is handled by Vite's built-in HMR WebSocket
+      // We'll use Server-Sent Events (SSE) for real-time updates instead
+      server.middlewares.use('/api/events', (req, res, next) => {
+        if (req.method === 'GET') {
+          // Set up Server-Sent Events
+          res.writeHead(200, {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Cache-Control'
+          });
 
-            switch (message.type) {
-              case 'ping':
-                ws.send(JSON.stringify({
-                  type: 'pong',
-                  data: { timestamp: Date.now() },
-                  timestamp: Date.now()
-                }));
-                break;
+          // Send initial stats
+          const sendStats = () => {
+            const stats = db.getStats();
+            const data = JSON.stringify({
+              type: 'stats_update',
+              data: {
+                activeUsers: stats.activeUsers,
+                totalRooms: stats.totalRooms,
+                messagesSent: stats.messagesSent,
+                filesShared: stats.filesShared,
+                onlineUsers: stats.onlineUsers
+              },
+              timestamp: Date.now()
+            });
 
-              case 'request_stats':
-                const stats = db.getStats();
-                ws.send(JSON.stringify({
-                  type: 'stats_update',
-                  data: {
-                    activeUsers: stats.activeUsers,
-                    totalRooms: stats.totalRooms,
-                    messagesSent: stats.messagesSent,
-                    filesShared: stats.filesShared,
-                    onlineUsers: stats.onlineUsers
-                  },
-                  timestamp: Date.now()
-                }));
-                break;
+            res.write(`data: ${data}\n\n`);
+          };
 
-              case 'join_room':
-                // Simulate room join
-                ws.send(JSON.stringify({
-                  type: 'room_update',
-                  data: {
-                    roomId: message.data.roomId,
-                    action: 'joined',
-                    message: 'Successfully joined room'
-                  },
-                  timestamp: Date.now()
-                }));
-                break;
-            }
-          } catch (error) {
-            console.error('❌ WebSocket message error:', error);
-          }
-        },
+          // Send initial data
+          sendStats();
 
-        close(ws) {
-          console.log('🔌 WebSocket connection closed');
+          // Send updates every 2 seconds
+          const interval = setInterval(sendStats, 2000);
+
+          // Cleanup on client disconnect
+          req.on('close', () => {
+            clearInterval(interval);
+            console.log('📡 SSE client disconnected');
+          });
+
+          console.log('📡 SSE client connected');
+        } else {
+          next();
         }
       });
-
-      // Broadcast stats updates every 3 seconds
-      setInterval(() => {
-        const stats = db.getStats();
-        const message = JSON.stringify({
-          type: 'stats_update',
-          data: {
-            activeUsers: stats.activeUsers,
-            totalRooms: stats.totalRooms,
-            messagesSent: stats.messagesSent,
-            filesShared: stats.filesShared,
-            onlineUsers: stats.onlineUsers
-          },
-          timestamp: Date.now()
-        });
-
-        // Broadcast to all connected WebSocket clients
-        server.ws.clients?.forEach((client) => {
-          if (client.readyState === 1) { // WebSocket.OPEN
-            try {
-              client.send(message);
-            } catch (error) {
-              console.error('❌ Failed to broadcast to WebSocket client:', error);
-            }
-          }
-        });
-      }, 3000);
 
       console.log('🔌 Real-time API plugin loaded');
       console.log('📊 Stats available at http://localhost:8080/api/auth/stats');
