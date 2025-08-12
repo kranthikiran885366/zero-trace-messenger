@@ -40,18 +40,25 @@ const io = socketIo(server, {
   transports: ['websocket', 'polling']
 });
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/securechat', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => {
-  console.log('🔒 Connected to MongoDB - SecureChat Database');
-})
-.catch((err) => {
-  console.error('❌ MongoDB connection error:', err);
-  process.exit(1);
-});
+// Initialize in-memory database for real-time data
+const inMemoryDB = require('./utils/inMemoryDB');
+console.log('💾 In-memory database initialized for real-time data');
+
+// Optional MongoDB Connection (if available)
+if (process.env.MONGODB_URI && process.env.MONGODB_URI !== 'mongodb://localhost:27017/securechat') {
+  mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log('🔒 Connected to MongoDB - SecureChat Database');
+  })
+  .catch((error) => {
+    console.warn('⚠️ MongoDB connection failed, using in-memory storage:', error.message);
+  });
+} else {
+  console.log('🚀 Using in-memory storage for real-time data');
+}
 
 // Security Middleware
 app.use(helmet({
