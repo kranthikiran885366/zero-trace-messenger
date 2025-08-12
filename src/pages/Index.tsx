@@ -48,7 +48,8 @@ const Index = () => {
 
     // Robust SSE connection with better error handling
     const connectSSE = () => {
-      const sseUrl = `${window.location.origin}/api/events`;
+      const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+      const sseUrl = `${apiUrl}/api/events`;
       console.log('📡 Connecting to SSE:', sseUrl);
 
       let eventSource: EventSource;
@@ -176,7 +177,7 @@ const Index = () => {
         }
       } catch (error) {
         if (error.name === 'AbortError') {
-          console.warn('⚠️ HTTP stats request timed out');
+          console.warn('���️ HTTP stats request timed out');
         } else if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
           console.warn('⚠️ Network error - unable to reach server');
 
