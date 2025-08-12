@@ -280,7 +280,105 @@ export function apiPlugin() {
           next();
         }
       });
-      
+
+      // Real-time rooms list endpoint
+      server.middlewares.use('/api/rooms', (req, res, next) => {
+        if (req.method === 'GET') {
+          try {
+            const rooms = roomManager.getAllRooms();
+            res.setHeader('Content-Type', 'application/json');
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.end(JSON.stringify({
+              success: true,
+              rooms: rooms.map(room => ({
+                ...room,
+                participantCount: room.participants ? room.participants.length : 0
+              })),
+              timestamp: new Date().toISOString()
+            }));
+          } catch (error) {
+            console.error('❌ Rooms API error:', error);
+            res.statusCode = 500;
+            res.end(JSON.stringify({
+              success: false,
+              error: 'Failed to retrieve rooms'
+            }));
+          }
+        } else if (req.method === 'POST') {
+          // Create new room
+          let body = '';
+          req.on('data', chunk => {
+            body += chunk.toString();
+          });
+          req.on('end', () => {
+            try {
+              const roomData = JSON.parse(body);
+              const newRoom = roomManager.createRoom(roomData);
+              res.setHeader('Content-Type', 'application/json');
+              res.setHeader('Access-Control-Allow-Origin', '*');
+              res.end(JSON.stringify({
+                success: true,
+                room: newRoom,
+                timestamp: new Date().toISOString()
+              }));
+            } catch (error) {
+              console.error('❌ Create room error:', error);
+              res.statusCode = 400;
+              res.end(JSON.stringify({
+                success: false,
+                error: 'Failed to create room'
+              }));
+            }
+          });
+        } else {
+          next();
+        }
+      });
+
+      // Room details endpoint
+      server.middlewares.use('/api/rooms/', (req, res, next) => {
+        const url = req.url;
+        const roomIdMatch = url.match(/^\/api\/rooms\/([^\/]+)$/);
+
+        if (roomIdMatch && req.method === 'GET') {
+          try {
+            const roomId = roomIdMatch[1];
+            const room = roomManager.getRoom(roomId);
+
+            if (!room) {
+              res.statusCode = 404;
+              res.end(JSON.stringify({
+                success: false,
+                error: 'Room not found'
+              }));
+              return;
+            }
+
+            const messages = roomManager.getRoomMessages(roomId);
+            const participants = roomManager.getRoomParticipants(roomId);
+
+            res.setHeader('Content-Type', 'application/json');
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.end(JSON.stringify({
+              success: true,
+              room,
+              messages: messages.slice(-20), // Last 20 messages
+              participants,
+              timestamp: new Date().toISOString()
+            }));
+          } catch (error) {
+            console.error('❌ Room details error:', error);
+            res.statusCode = 500;
+            res.end(JSON.stringify({
+              success: false,
+              error: 'Failed to retrieve room details'
+            }));
+          }
+        } else {
+          next();
+        }
+      });
+
       // WebSocket support is handled by Vite's built-in HMR WebSocket
       // We'll use Server-Sent Events (SSE) for real-time updates instead
       server.middlewares.use('/api/events', (req, res, next) => {
