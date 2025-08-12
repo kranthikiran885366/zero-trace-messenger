@@ -107,9 +107,11 @@ const Index = () => {
 
     // Track if we have an active HTTP request to prevent overlaps
     let isHttpRequestActive = false;
+    let retryCount = 0;
+    const maxRetries = 3;
 
     // Fallback HTTP polling in case SSE fails
-    const loadStatsHTTP = async () => {
+    const loadStatsHTTP = async (isRetry = false) => {
       // Prevent multiple simultaneous requests
       if (isHttpRequestActive) {
         console.log('📊 HTTP request already active, skipping...');
