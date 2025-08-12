@@ -24,7 +24,7 @@ const UserAuth = () => {
     if (!nickname.trim()) {
       toast({
         title: "Nickname Required",
-        description: "Please enter a nickname to create your anonymous session.",
+        description: "Please enter a nickname to create your anonymous user.",
         variant: "destructive"
       });
       return;
@@ -186,19 +186,19 @@ const UserAuth = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Nickname</label>
-                    <p className="font-semibold">{session.nickname}</p>
+                    <p className="font-semibold">{user.nickname}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Session ID</label>
-                    <p className="font-mono text-sm">{session.id.slice(-12)}</p>
+                    <p className="font-mono text-sm">{user.id.slice(-12)}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Fingerprint</label>
-                    <p className="font-mono text-sm">{session.fingerprint}</p>
+                    <p className="font-mono text-sm">{user.fingerprint}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Created</label>
-                    <p className="text-sm">{new Date(session.createdAt).toLocaleString()}</p>
+                    <p className="text-sm">{new Date(user.createdAt).toLocaleString()}</p>
                   </div>
                 </div>
 
@@ -206,19 +206,19 @@ const UserAuth = () => {
                   <h4 className="font-medium mb-3">Session Statistics</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-center p-3 bg-primary/5 rounded-lg">
-                      <p className="text-2xl font-bold text-primary">{session.stats.roomsJoined}</p>
+                      <p className="text-2xl font-bold text-primary">{user.stats.roomsJoined}</p>
                       <p className="text-sm text-muted-foreground">Rooms Joined</p>
                     </div>
                     <div className="text-center p-3 bg-accent/5 rounded-lg">
-                      <p className="text-2xl font-bold text-accent">{session.stats.messagesExchanged}</p>
+                      <p className="text-2xl font-bold text-accent">{user.stats.messagesExchanged}</p>
                       <p className="text-sm text-muted-foreground">Messages Exchanged</p>
                     </div>
                     <div className="text-center p-3 bg-primary/5 rounded-lg">
-                      <p className="text-2xl font-bold text-primary">{session.stats.filesShared}</p>
+                      <p className="text-2xl font-bold text-primary">{user.stats.filesShared}</p>
                       <p className="text-sm text-muted-foreground">Files Shared</p>
                     </div>
                     <div className="text-center p-3 bg-accent/5 rounded-lg">
-                      <p className="text-2xl font-bold text-accent">{formatDuration(session.stats.callMinutes)}</p>
+                      <p className="text-2xl font-bold text-accent">{formatDuration(user.stats.callMinutes)}</p>
                       <p className="text-sm text-muted-foreground">Call Time</p>
                     </div>
                   </div>
@@ -280,7 +280,7 @@ const UserAuth = () => {
                         <p className="text-xs text-muted-foreground">Automatically delete messages after timer</p>
                       </div>
                       <Switch 
-                        checked={session.preferences.autoDeleteMessages}
+                        checked={user.preferences.autoDeleteMessages}
                         onCheckedChange={(checked) => updatePreference('autoDeleteMessages', checked)}
                       />
                     </div>
@@ -291,7 +291,7 @@ const UserAuth = () => {
                         <p className="text-xs text-muted-foreground">Let others know when you're typing</p>
                       </div>
                       <Switch 
-                        checked={session.preferences.showTypingIndicators}
+                        checked={user.preferences.showTypingIndicators}
                         onCheckedChange={(checked) => updatePreference('showTypingIndicators', checked)}
                       />
                     </div>
@@ -302,7 +302,7 @@ const UserAuth = () => {
                         <p className="text-xs text-muted-foreground">Automatically start video when joining calls</p>
                       </div>
                       <Switch 
-                        checked={session.preferences.autoJoinVideo}
+                        checked={user.preferences.autoJoinVideo}
                         onCheckedChange={(checked) => updatePreference('autoJoinVideo', checked)}
                       />
                     </div>
@@ -311,7 +311,7 @@ const UserAuth = () => {
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Default Message Timer</label>
                     <Select 
-                      value={session.preferences.defaultMessageTimer} 
+                      value={user.preferences.defaultMessageTimer} 
                       onValueChange={(value) => updatePreference('defaultMessageTimer', value)}
                     >
                       <SelectTrigger>
@@ -329,7 +329,7 @@ const UserAuth = () => {
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Video Quality</label>
                     <Select 
-                      value={session.preferences.preferredQuality} 
+                      value={user.preferences.preferredQuality} 
                       onValueChange={(value) => updatePreference('preferredQuality', value)}
                     >
                       <SelectTrigger>
