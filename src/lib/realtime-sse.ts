@@ -34,7 +34,7 @@ class RealTimeSSEClient {
     }
 
     this.connectionState = 'connecting';
-    console.log('📡 Connecting to real-time SSE server:', this.url);
+    console.log('�� Connecting to real-time SSE server:', this.url);
 
     try {
       this.eventSource = new EventSource(this.url);
@@ -60,6 +60,9 @@ class RealTimeSSEClient {
         const message: RealTimeEvent = JSON.parse(event.data);
         console.log('📨 Real-time SSE event received:', message);
         this.emit(message.type, message.data);
+
+        // Trigger notifications for certain events
+        this.handleNotifications(message);
       } catch (error) {
         console.error('❌ Failed to parse SSE message:', error);
       }
