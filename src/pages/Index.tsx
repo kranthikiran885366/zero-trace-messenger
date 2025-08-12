@@ -39,13 +39,13 @@ const Index = () => {
   const [nickname, setNickname] = useState('');
   const [showNicknameDialog, setShowNicknameDialog] = useState(false);
   
-  // Real-time WebSocket connection for live updates
+  // Real-time Server-Sent Events connection for live updates
   useEffect(() => {
-    const realTimeClient = getRealTimeClient();
+    const realTimeClient = getRealTimeSSEClient();
 
-    // Set up real-time stats updates via WebSocket
+    // Set up real-time stats updates via SSE
     const handleStatsUpdate = (newStats: RealTimeStats) => {
-      console.log('📊 Real-time stats update via WebSocket:', newStats);
+      console.log('📊 Real-time stats update via SSE:', newStats);
       setStats({
         activeUsers: newStats.activeUsers,
         totalRooms: newStats.totalRooms,
@@ -56,11 +56,7 @@ const Index = () => {
     };
 
     const handleConnectionChange = (status: { status: string }) => {
-      console.log('🔌 Real-time connection status:', status.status);
-      if (status.status === 'connected') {
-        // Request initial stats when connected
-        realTimeClient.requestStats();
-      }
+      console.log('📡 Real-time SSE connection status:', status.status);
     };
 
     // Subscribe to real-time events
@@ -103,7 +99,7 @@ const Index = () => {
           }
         }
       } catch (error) {
-        console.warn('⚠️ HTTP stats fallback failed:', error);
+        console.warn('⚠�� HTTP stats fallback failed:', error);
       }
     };
 
