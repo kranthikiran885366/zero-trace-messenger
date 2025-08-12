@@ -159,8 +159,18 @@ const Features = () => {
       </div>
       
       {/* Hero Section */}
-      <section className="py-16 bg-gradient-to-br from-cyber-darker via-background to-cyber-dark cyber-grid">
-        <div className="container mx-auto px-4">
+      <section className="py-16 bg-gradient-to-br from-cyber-darker via-background to-cyber-dark cyber-grid relative overflow-hidden">
+        {/* Hero Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.pexels.com/photos/8090263/pexels-photo-8090263.jpeg?auto=compress&cs=tinysrgb&w=1920"
+            alt="Cybersecurity technology background"
+            className="w-full h-full object-cover opacity-15"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-cyber-darker/80 via-background/70 to-cyber-dark/80" />
+        </div>
+
+        <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center space-y-6">
             <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
               🚀 Complete Feature Overview
