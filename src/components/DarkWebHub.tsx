@@ -390,7 +390,7 @@ const DarkWebHub = () => {
             <div className="absolute inset-0 bg-gradient-to-r from-red-900/50 via-black/60 to-purple-900/50" />
           </div>
           <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 z-10" />
-          <CardHeader className="text-center relative">
+          <CardHeader className="text-center relative z-20">
             <CardTitle className="text-5xl flex items-center justify-center gap-4 mb-2">
               <div className="relative">
                 <Skull className="h-12 w-12 text-red-500 animate-pulse" />
