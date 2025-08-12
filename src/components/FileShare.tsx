@@ -261,8 +261,17 @@ const FileShare = () => {
       </div>
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header */}
-        <Card className="bg-card/80 backdrop-blur-sm border-primary/20">
-          <CardHeader className="text-center">
+        <Card className="bg-card/80 backdrop-blur-sm border-primary/20 relative overflow-hidden">
+          {/* Background Image */}
+          <div className="absolute inset-0 z-0">
+            <img
+              src="https://images.pexels.com/photos/19825057/pexels-photo-19825057.jpeg?auto=compress&cs=tinysrgb&w=1920"
+              alt="Secure file storage background"
+              className="w-full h-full object-cover opacity-10"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-card/80 to-card/60" />
+          </div>
+          <CardHeader className="text-center relative z-10">
             <CardTitle className="text-3xl flex items-center justify-center gap-3">
               <Shield className="h-8 w-8 text-primary" />
               Secure File Sharing
