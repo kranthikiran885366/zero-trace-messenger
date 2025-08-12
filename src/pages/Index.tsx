@@ -469,8 +469,17 @@ const Index = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
+      <section className="py-20 relative">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <img
+            src="https://images.pexels.com/photos/1089438/pexels-photo-1089438.jpeg?auto=compress&cs=tinysrgb&w=1920"
+            alt="Matrix code background"
+            className="w-full h-full object-cover"
+          />
+        </div>
+
+        <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-3xl lg:text-4xl font-bold mb-6">
@@ -480,26 +489,44 @@ const Index = () => {
                 Built with the latest cryptographic standards and privacy-preserving technologies
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {features.map((feature, index) => (
-                <Card key={index} className="group hover:shadow-lg transition-all duration-300 border-border/50">
-                  <CardContent className="p-8">
-                    <div className="flex items-start space-x-4">
-                      <div className="p-3 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+              {features.map((feature, index) => {
+                // Feature images for visual enhancement
+                const featureImages = [
+                  "https://images.pexels.com/photos/5475786/pexels-photo-5475786.jpeg?auto=compress&cs=tinysrgb&w=800", // Military-Grade Encryption
+                  "https://images.pexels.com/photos/9783812/pexels-photo-9783812.jpeg?auto=compress&cs=tinysrgb&w=800", // Self-Destructing Messages
+                  "https://images.pexels.com/photos/24347621/pexels-photo-24347621.jpeg?auto=compress&cs=tinysrgb&w=800", // Encrypted Video Calls
+                  "https://images.pexels.com/photos/8371715/pexels-photo-8371715.jpeg?auto=compress&cs=tinysrgb&w=800" // Secure File Sharing
+                ];
+
+                return (
+                <Card key={index} className="group hover:shadow-lg transition-all duration-300 border-border/50 overflow-hidden">
+                  {/* Feature Image Header */}
+                  <div className="relative h-48 overflow-hidden">
+                    <img
+                      src={featureImages[index]}
+                      alt={`${feature.title} illustration`}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-card/90 to-transparent" />
+                    <div className="absolute bottom-4 left-4">
+                      <div className="p-3 bg-primary/20 backdrop-blur-sm rounded-lg">
                         <feature.icon className="h-8 w-8 text-primary" />
                       </div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                        <p className="text-muted-foreground mb-3">{feature.description}</p>
-                        <Badge variant="secondary" className="bg-accent/10 text-accent">
-                          {feature.stats}
-                        </Badge>
-                      </div>
                     </div>
+                  </div>
+
+                  <CardContent className="p-6">
+                    <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
+                    <p className="text-muted-foreground mb-4 leading-relaxed">{feature.description}</p>
+                    <Badge variant="secondary" className="bg-accent/10 text-accent">
+                      {feature.stats}
+                    </Badge>
                   </CardContent>
                 </Card>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
