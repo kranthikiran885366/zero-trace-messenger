@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, handleAPIError } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { getRealTimeClient, RealTimeStats } from '@/lib/realtime';
 
 const Index = () => {
   const navigate = useNavigate();
