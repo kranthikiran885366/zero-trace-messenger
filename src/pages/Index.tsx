@@ -167,13 +167,28 @@ const Index = () => {
           console.warn('⚠️ HTTP stats request timed out');
         } else if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
           console.warn('⚠️ Network error - unable to reach server');
-          setConnectionStatus('disconnected');
+
+          // Retry logic for network failures
+          if (!isRetry && retryCount < maxRetries) {
+            retryCount++;
+            console.log(`🔄 Retrying HTTP request (${retryCount}/${maxRetries}) in 2 seconds...`);
+            setTimeout(() => {
+              isHttpRequestActive = false;
+              loadStatsHTTP(true);
+            }, 2000);
+            return; // Don't set isHttpRequestActive = false yet
+          } else {
+            setConnectionStatus('disconnected');
+            retryCount = 0; // Reset retry count
+          }
         } else {
           console.warn('⚠️ HTTP stats fallback failed:', error.message || error);
           setConnectionStatus('error');
         }
       } finally {
-        isHttpRequestActive = false;
+        if (isRetry || retryCount >= maxRetries) {
+          isHttpRequestActive = false;
+        }
       }
     };
 
