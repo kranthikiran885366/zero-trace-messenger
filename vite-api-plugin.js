@@ -232,6 +232,87 @@ export function apiPlugin() {
 
   const db = new RealTimeDB();
   const roomManager = new RealTimeRoomManager();
+
+  // File manager simulation
+  class RealTimeFileManager {
+    constructor() {
+      this.files = new Map();
+      this.initializeFiles();
+      this.startActivity();
+    }
+
+    initializeFiles() {
+      const initialFiles = [
+        { name: 'project_plan.pdf', size: 2048576, type: 'application/pdf', uploadedBy: 'Alice' },
+        { name: 'screenshot.png', size: 512000, type: 'image/png', uploadedBy: 'Bob' },
+        { name: 'demo_video.mp4', size: 15728640, type: 'video/mp4', uploadedBy: 'Charlie' }
+      ];
+
+      initialFiles.forEach((fileData, index) => {
+        const fileId = `file_${Date.now()}_${index}`;
+        const file = {
+          id: fileId,
+          name: fileData.name,
+          size: fileData.size,
+          type: fileData.type,
+          uploadedBy: fileData.uploadedBy,
+          uploadedAt: Date.now(),
+          downloadCount: Math.floor(Math.random() * 10),
+          status: 'ready'
+        };
+        this.files.set(fileId, file);
+      });
+    }
+
+    startActivity() {
+      setInterval(() => {
+        // Simulate file sharing activity
+        if (Math.random() < 0.15) {
+          const fileNames = ['document.pdf', 'image.jpg', 'video.mp4', 'audio.mp3', 'archive.zip'];
+          const fileName = fileNames[Math.floor(Math.random() * fileNames.length)];
+          const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+
+          const file = {
+            id: fileId,
+            name: fileName,
+            size: Math.floor(Math.random() * 10000000) + 100000,
+            type: 'application/octet-stream',
+            uploadedBy: `User${Math.floor(Math.random() * 100)}`,
+            uploadedAt: Date.now(),
+            downloadCount: 0,
+            status: 'ready'
+          };
+
+          this.files.set(fileId, file);
+
+          // Keep only recent files
+          if (this.files.size > 20) {
+            const oldest = Array.from(this.files.entries())
+              .sort((a, b) => a[1].uploadedAt - b[1].uploadedAt)[0];
+            this.files.delete(oldest[0]);
+          }
+        }
+      }, 3000);
+    }
+
+    getAllFiles() {
+      return Array.from(this.files.values());
+    }
+
+    getStats() {
+      const totalFiles = this.files.size;
+      const totalSize = Array.from(this.files.values()).reduce((sum, file) => sum + file.size, 0);
+      const totalDownloads = Array.from(this.files.values()).reduce((sum, file) => sum + file.downloadCount, 0);
+
+      return {
+        totalFiles,
+        totalSize,
+        totalDownloads
+      };
+    }
+  }
+
+  const fileManager = new RealTimeFileManager();
   
   return {
     name: 'real-time-api',
