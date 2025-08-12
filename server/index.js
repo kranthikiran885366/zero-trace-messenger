@@ -25,7 +25,7 @@ const socketHandler = require('./sockets/socketHandler');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
-const errorHandler = require('./middleware/errorHandler');
+const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
 const server = http.createServer(app);
