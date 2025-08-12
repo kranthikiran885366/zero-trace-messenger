@@ -34,7 +34,7 @@ class RealTimeSSEClient {
     }
 
     this.connectionState = 'connecting';
-    console.log('�� Connecting to real-time SSE server:', this.url);
+    console.log('📡 Connecting to real-time SSE server:', this.url);
 
     try {
       this.eventSource = new EventSource(this.url);
@@ -140,6 +140,63 @@ class RealTimeSSEClient {
 
   onConnectionChange(callback: (status: { status: string }) => void) {
     this.on('connection', callback);
+  }
+
+  private handleNotifications(message: RealTimeEvent) {
+    // Import notification manager dynamically to avoid circular dependencies
+    if (typeof window !== 'undefined') {
+      import('@/lib/notifications').then(({ getNotificationManager }) => {
+        const notificationManager = getNotificationManager();
+
+        switch (message.type) {
+          case 'stats_update':
+            // Only notify on significant changes
+            if (message.data.activeUsers > 50) {
+              notificationManager.notifySystemUpdate(
+                'High Activity',
+                `${message.data.activeUsers} users are now online!`,
+                'normal'
+              );
+            }
+            break;
+
+          case 'rooms_update':
+            // Notify about new rooms
+            if (message.data.rooms && Array.isArray(message.data.rooms)) {
+              const activeRooms = message.data.rooms.filter((room: any) => room.isActive);
+              if (activeRooms.length > 10) {
+                notificationManager.notifySystemUpdate(
+                  'New Rooms Available',
+                  `${activeRooms.length} active rooms to join`,
+                  'low'
+                );
+              }
+            }
+            break;
+
+          case 'user_activity':
+            if (message.data.action === 'joined') {
+              notificationManager.notifyUserJoined(
+                message.data.roomName || 'Unknown Room',
+                message.data.username || 'Anonymous',
+                message.data.roomId
+              );
+            }
+            break;
+
+          case 'new_message':
+            notificationManager.notifyNewMessage(
+              message.data.roomName || 'Room',
+              message.data.username || 'Anonymous',
+              message.data.content || 'New message',
+              message.data.roomId
+            );
+            break;
+        }
+      }).catch(error => {
+        console.warn('⚠️ Failed to import notification manager:', error);
+      });
+    }
   }
 }
 
