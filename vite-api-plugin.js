@@ -392,22 +392,44 @@ export function apiPlugin() {
             'Access-Control-Allow-Headers': 'Cache-Control'
           });
 
-          // Send initial stats
-          const sendStats = () => {
+          // Send comprehensive real-time updates
+          const sendUpdates = () => {
             const stats = db.getStats();
-            const data = JSON.stringify({
+            const roomStats = roomManager.getStats();
+
+            // Send stats update
+            const statsData = JSON.stringify({
               type: 'stats_update',
               data: {
                 activeUsers: stats.activeUsers,
-                totalRooms: stats.totalRooms,
-                messagesSent: stats.messagesSent,
+                totalRooms: roomStats.totalRooms,
+                messagesSent: roomStats.totalMessages,
                 filesShared: stats.filesShared,
-                onlineUsers: stats.onlineUsers
+                onlineUsers: roomStats.totalParticipants
               },
               timestamp: Date.now()
             });
 
-            res.write(`data: ${data}\n\n`);
+            res.write(`data: ${statsData}\n\n`);
+
+            // Send room list update
+            const rooms = roomManager.getAllRooms();
+            const roomData = JSON.stringify({
+              type: 'rooms_update',
+              data: {
+                rooms: rooms.map(room => ({
+                  id: room.id,
+                  name: room.name,
+                  participantCount: room.participants ? room.participants.length : 0,
+                  messageCount: room.messageCount,
+                  isPrivate: room.isPrivate,
+                  isActive: room.isActive
+                }))
+              },
+              timestamp: Date.now()
+            });
+
+            res.write(`data: ${roomData}\n\n`);
           };
 
           // Send initial data
