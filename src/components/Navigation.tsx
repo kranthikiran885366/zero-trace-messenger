@@ -31,6 +31,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import NotificationCenter from '@/components/NotificationCenter';
 
 const Navigation = () => {
   const navigate = useNavigate();
