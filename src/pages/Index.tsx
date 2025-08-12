@@ -70,13 +70,15 @@ const Index = () => {
         const statsUrl = `${apiUrl}/api/auth/stats`;
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
 
         const response = await fetch(statsUrl, {
           method: 'GET',
           headers: {
-            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
           },
+          credentials: 'same-origin',
           signal: controller.signal
         });
 
