@@ -4,8 +4,9 @@
   "description": "Secure chat application backend with MongoDB",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
+    "start": "node simple-server.js",
+    "start-full": "node index.js",
+    "dev": "nodemon simple-server.js",
     "test": "jest",
     "seed": "node scripts/seed.js",
     "cleanup": "node scripts/cleanup.js"
