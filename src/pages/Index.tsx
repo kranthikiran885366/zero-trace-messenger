@@ -38,21 +38,15 @@ const Index = () => {
   const [nickname, setNickname] = useState('');
   const [showNicknameDialog, setShowNicknameDialog] = useState(false);
   
-  // Load real-time statistics with graceful fallback
+  // Load real-time statistics from backend
   useEffect(() => {
     const loadStats = async () => {
       try {
-        // Use environment variable or default to demo mode
-        const apiUrl = import.meta.env.VITE_API_URL;
-
-        if (!apiUrl || apiUrl.includes('securechat.app')) {
-          // If no valid API URL or using demo URL, skip API call and use demo data
-          console.info('🚀 SecureChat running in demo mode with simulated data');
-          throw new Error('Using demo mode - no backend API configured');
-        }
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        console.log('🔄 Fetching real-time stats from:', `${apiUrl}/api/auth/stats`);
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // Increased timeout for real backend
 
         const response = await fetch(`${apiUrl}/api/auth/stats`, {
           method: 'GET',
@@ -66,30 +60,31 @@ const Index = () => {
 
         if (response.ok) {
           const data = await response.json();
+          console.log('✅ Real-time stats received:', data);
+
           if (data.success && data.stats) {
             setStats({
-              activeUsers: data.stats.activeUsers || 0,
-              totalRooms: data.stats.totalRooms || Math.floor(data.stats.activeUsers * 0.3) || 12,
-              messagesSent: data.stats.messagesSent || Math.floor(data.stats.activeUsers * 95) || 2840,
-              filesShared: data.stats.filesShared || Math.floor(data.stats.activeUsers * 18) || 341,
-              onlineUsers: data.stats.onlineUsers || data.stats.activeUsers || 0
+              activeUsers: data.stats.activeUsers,
+              totalRooms: data.stats.totalRooms,
+              messagesSent: data.stats.messagesSent,
+              filesShared: data.stats.filesShared,
+              onlineUsers: data.stats.onlineUsers
             });
             return;
           }
         }
 
-        throw new Error(`API Error: ${response.status}`);
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
       } catch (error) {
-        // Use animated demo stats that look realistic
-        const baseTime = Date.now();
-        const variation = Math.sin(baseTime / 60000) * 0.1; // Slow variation
+        console.error('❌ Failed to load real-time stats:', error);
 
+        // Initialize with zeros if backend is not available - NO MOCK DATA
         setStats({
-          activeUsers: Math.floor(127 + variation * 50),
-          totalRooms: Math.floor(45 + variation * 15),
-          messagesSent: Math.floor(12840 + variation * 1000),
-          filesShared: Math.floor(2341 + variation * 200),
-          onlineUsers: Math.floor(89 + variation * 30)
+          activeUsers: 0,
+          totalRooms: 0,
+          messagesSent: 0,
+          filesShared: 0,
+          onlineUsers: 0
         });
       }
     };
