@@ -55,6 +55,7 @@ const Index = () => {
 
       eventSource.onopen = () => {
         console.log('✅ SSE connection opened successfully');
+        setConnectionStatus('connected');
       };
 
       eventSource.onmessage = (event) => {
@@ -70,9 +71,11 @@ const Index = () => {
               filesShared: data.data.filesShared || 0,
               onlineUsers: data.data.onlineUsers || 0
             });
+            setConnectionStatus('connected');
           }
         } catch (error) {
           console.error('❌ Failed to parse SSE message:', error);
+          setConnectionStatus('error');
         }
       };
 
@@ -81,6 +84,7 @@ const Index = () => {
           readyState: eventSource.readyState,
           error: error
         });
+        setConnectionStatus(eventSource.readyState === EventSource.CLOSED ? 'disconnected' : 'error');
       };
 
       return eventSource;
