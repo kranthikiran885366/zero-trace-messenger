@@ -68,14 +68,22 @@ class RealTimeSSEClient {
       }
     };
 
-    this.eventSource.onerror = (error) => {
-      console.error('❌ Real-time SSE connection error:', error);
-      this.connectionState = 'error';
-      this.emit('connection', { status: 'error' });
-      
+    this.eventSource.onerror = (event) => {
+      console.warn('⚠️ Real-time SSE connection error:', {
+        readyState: this.eventSource?.readyState,
+        type: event.type,
+        target: event.target
+      });
+
+      // Only treat as error if connection is completely failed
       if (this.eventSource?.readyState === EventSource.CLOSED) {
+        console.log('🔌 SSE connection closed, attempting reconnect...');
         this.connectionState = 'disconnected';
         this.handleReconnect();
+      } else {
+        // Connection might still be working, just a temporary error
+        this.connectionState = 'error';
+        this.emit('connection', { status: 'error' });
       }
     };
   }
