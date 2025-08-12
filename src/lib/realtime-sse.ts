@@ -30,6 +30,7 @@ class RealTimeSSEClient {
 
   connect() {
     if (this.eventSource && (this.eventSource.readyState === EventSource.CONNECTING || this.eventSource.readyState === EventSource.OPEN)) {
+      console.log('🔗 SSE already connecting/connected, skipping...');
       return;
     }
 
@@ -37,10 +38,17 @@ class RealTimeSSEClient {
     console.log('📡 Connecting to real-time SSE server:', this.url);
 
     try {
+      // Close existing connection if any
+      if (this.eventSource) {
+        this.eventSource.close();
+        this.eventSource = null;
+      }
+
       this.eventSource = new EventSource(this.url);
       this.setupEventHandlers();
     } catch (error) {
       console.error('❌ Failed to create SSE connection:', error);
+      this.connectionState = 'error';
       this.handleReconnect();
     }
   }
