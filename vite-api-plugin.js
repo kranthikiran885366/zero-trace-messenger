@@ -327,6 +327,7 @@ export function apiPlugin() {
             res.setHeader('Content-Type', 'application/json');
             res.setHeader('Access-Control-Allow-Origin', '*');
             const roomStats = roomManager.getStats();
+            const fileStats = fileManager.getStats();
 
             res.end(JSON.stringify({
               success: true,
@@ -337,7 +338,7 @@ export function apiPlugin() {
                 registeredUsers: 0,
                 totalRooms: roomStats.totalRooms,
                 messagesSent: roomStats.totalMessages,
-                filesShared: stats.filesShared,
+                filesShared: fileStats.totalFiles,
                 onlineUsers: roomStats.totalParticipants
               },
               timestamp: new Date().toISOString(),
@@ -347,6 +348,11 @@ export function apiPlugin() {
                 totalRooms: roomStats.totalRooms,
                 totalParticipants: roomStats.totalParticipants,
                 totalMessages: roomStats.totalMessages
+              },
+              fileStats: {
+                totalFiles: fileStats.totalFiles,
+                totalSize: fileStats.totalSize,
+                totalDownloads: fileStats.totalDownloads
               }
             }));
           } catch (error) {
@@ -477,6 +483,7 @@ export function apiPlugin() {
           const sendUpdates = () => {
             const stats = db.getStats();
             const roomStats = roomManager.getStats();
+            const fileStats = fileManager.getStats();
 
             // Send stats update
             const statsData = JSON.stringify({
@@ -485,7 +492,7 @@ export function apiPlugin() {
                 activeUsers: stats.activeUsers,
                 totalRooms: roomStats.totalRooms,
                 messagesSent: roomStats.totalMessages,
-                filesShared: stats.filesShared,
+                filesShared: fileStats.totalFiles,
                 onlineUsers: roomStats.totalParticipants
               },
               timestamp: Date.now()
@@ -511,6 +518,27 @@ export function apiPlugin() {
             });
 
             res.write(`data: ${roomData}\n\n`);
+
+            // Send file sharing updates
+            const files = fileManager.getAllFiles();
+            const fileData = JSON.stringify({
+              type: 'files_update',
+              data: {
+                files: files.slice(-10).map(file => ({ // Last 10 files
+                  id: file.id,
+                  name: file.name,
+                  size: file.size,
+                  uploadedBy: file.uploadedBy,
+                  uploadedAt: file.uploadedAt,
+                  downloadCount: file.downloadCount,
+                  status: file.status
+                })),
+                stats: fileStats
+              },
+              timestamp: Date.now()
+            });
+
+            res.write(`data: ${fileData}\n\n`);
           };
 
           // Send initial data
