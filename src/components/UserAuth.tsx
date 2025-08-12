@@ -46,14 +46,13 @@ const UserAuth = () => {
     }
   };
 
-  const updatePreference = (key: keyof UserSession['preferences'], value: any) => {
-    if (!session) return;
-    updateSession({
-      preferences: {
-        ...session.preferences,
-        [key]: value
-      }
-    });
+  const updatePreference = async (key: string, value: any) => {
+    if (!user) return;
+    try {
+      await updatePreferences({ [key]: value });
+    } catch (error) {
+      // Error already handled by context
+    }
   };
 
   const formatDuration = (minutes: number) => {
