@@ -42,13 +42,15 @@ const Index = () => {
   useEffect(() => {
     const loadStats = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-        console.log('🔄 Fetching real-time stats from:', `${apiUrl}/api/auth/stats`);
+        // Use the same origin for API calls since we're using Vite plugin
+        const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+        const statsUrl = `${apiUrl}/api/auth/stats`;
+        console.log('🔄 Fetching real-time stats from:', statsUrl);
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // Increased timeout for real backend
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-        const response = await fetch(`${apiUrl}/api/auth/stats`, {
+        const response = await fetch(statsUrl, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -64,11 +66,11 @@ const Index = () => {
 
           if (data.success && data.stats) {
             setStats({
-              activeUsers: data.stats.activeUsers,
-              totalRooms: data.stats.totalRooms,
-              messagesSent: data.stats.messagesSent,
-              filesShared: data.stats.filesShared,
-              onlineUsers: data.stats.onlineUsers
+              activeUsers: data.stats.activeUsers || 0,
+              totalRooms: data.stats.totalRooms || 0,
+              messagesSent: data.stats.messagesSent || 0,
+              filesShared: data.stats.filesShared || 0,
+              onlineUsers: data.stats.onlineUsers || 0
             });
             return;
           }
@@ -78,7 +80,7 @@ const Index = () => {
       } catch (error) {
         console.error('❌ Failed to load real-time stats:', error);
 
-        // Initialize with zeros if backend is not available - NO MOCK DATA
+        // Initialize with zeros - will retry on next interval
         setStats({
           activeUsers: 0,
           totalRooms: 0,
@@ -89,10 +91,11 @@ const Index = () => {
       }
     };
 
+    // Load immediately
     loadStats();
-    
-    // Update stats every 30 seconds
-    const interval = setInterval(loadStats, 30000);
+
+    // Update stats every 3 seconds for real-time feel
+    const interval = setInterval(loadStats, 3000);
     return () => clearInterval(interval);
   }, []);
 
