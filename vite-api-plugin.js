@@ -245,6 +245,8 @@ export function apiPlugin() {
             
             res.setHeader('Content-Type', 'application/json');
             res.setHeader('Access-Control-Allow-Origin', '*');
+            const roomStats = roomManager.getStats();
+
             res.end(JSON.stringify({
               success: true,
               stats: {
@@ -252,14 +254,19 @@ export function apiPlugin() {
                 totalUsers: stats.activeUsers,
                 anonymousUsers: stats.activeUsers,
                 registeredUsers: 0,
-                totalRooms: stats.totalRooms,
-                messagesSent: stats.messagesSent,
+                totalRooms: roomStats.totalRooms,
+                messagesSent: roomStats.totalMessages,
                 filesShared: stats.filesShared,
-                onlineUsers: stats.onlineUsers
+                onlineUsers: roomStats.totalParticipants
               },
               timestamp: new Date().toISOString(),
               realTime: true,
-              source: 'vite-plugin'
+              source: 'vite-plugin',
+              roomStats: {
+                totalRooms: roomStats.totalRooms,
+                totalParticipants: roomStats.totalParticipants,
+                totalMessages: roomStats.totalMessages
+              }
             }));
           } catch (error) {
             console.error('❌ Stats error:', error);
