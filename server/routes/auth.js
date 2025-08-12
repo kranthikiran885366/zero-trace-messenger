@@ -474,85 +474,40 @@ router.put('/preferences', async (req, res) => {
   }
 });
 
-// Get comprehensive stats
+// Get real-time comprehensive stats
 router.get('/stats', async (req, res) => {
   try {
-    // Get user stats
-    const activeUsers = await User.findActiveUsers();
-    const totalUsers = await User.countDocuments({ isActive: true });
-    const anonymousUsers = await User.countDocuments({
-      isAnonymous: true,
-      isActive: true
-    });
+    const inMemoryDB = require('../utils/inMemoryDB');
 
-    // Get room stats (if Room model exists)
-    let totalRooms = 0;
-    try {
-      const Room = require('../models/Room');
-      totalRooms = await Room.countDocuments({ isActive: true });
-    } catch (err) {
-      // Room model might not exist, use fallback
-      totalRooms = Math.floor(activeUsers.length * 0.3) + 12;
-    }
+    // Get real-time stats from in-memory database
+    const stats = inMemoryDB.getStats();
+    const activeUsers = inMemoryDB.getActiveUsers();
 
-    // Get message stats (if Message model exists)
-    let messagesSent = 0;
-    try {
-      const Message = require('../models/Message');
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      messagesSent = await Message.countDocuments({
-        createdAt: { $gte: today }
-      });
-    } catch (err) {
-      // Message model might not exist, use fallback
-      messagesSent = Math.floor(activeUsers.length * 95) + 2840;
-    }
-
-    // Get file stats (if File model exists)
-    let filesShared = 0;
-    try {
-      const File = require('../models/File');
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      filesShared = await File.countDocuments({
-        createdAt: { $gte: today }
-      });
-    } catch (err) {
-      // File model might not exist, use fallback
-      filesShared = Math.floor(activeUsers.length * 18) + 341;
-    }
+    console.log('📊 Real-time stats requested:', stats);
 
     res.json({
       success: true,
       stats: {
-        activeUsers: activeUsers.length,
-        totalUsers,
-        anonymousUsers,
-        registeredUsers: totalUsers - anonymousUsers,
-        totalRooms,
-        messagesSent,
-        filesShared,
-        onlineUsers: activeUsers.length // Same as activeUsers for now
-      }
+        activeUsers: stats.activeUsers,
+        totalUsers: stats.activeUsers, // All users are active in this system
+        anonymousUsers: stats.activeUsers, // All users are anonymous for now
+        registeredUsers: 0,
+        totalRooms: stats.totalRooms,
+        messagesSent: stats.messagesSent,
+        filesShared: stats.filesShared,
+        onlineUsers: stats.onlineUsers
+      },
+      timestamp: new Date().toISOString(),
+      realTime: true
     });
 
   } catch (error) {
-    console.error('Stats error:', error);
+    console.error('❌ Stats error:', error);
 
-    // Return fallback stats if database is unavailable
-    res.json({
-      success: true,
-      stats: {
-        activeUsers: 127,
-        totalUsers: 127,
-        anonymousUsers: 89,
-        registeredUsers: 38,
-        totalRooms: 45,
-        messagesSent: 12840,
-        filesShared: 2341,
-        onlineUsers: 89
-      }
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve real-time stats',
+      message: error.message
     });
   }
 });
