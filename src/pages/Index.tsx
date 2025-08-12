@@ -27,6 +27,9 @@ const Index = () => {
     filesShared: 0,
     onlineUsers: 0
   });
+
+  // Connection status for visual indicator
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('connecting');
   
   // Room joining
   const [roomCode, setRoomCode] = useState('');
