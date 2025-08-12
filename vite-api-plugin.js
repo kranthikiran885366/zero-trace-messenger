@@ -433,10 +433,10 @@ export function apiPlugin() {
           };
 
           // Send initial data
-          sendStats();
+          sendUpdates();
 
           // Send updates every 2 seconds
-          const interval = setInterval(sendStats, 2000);
+          const interval = setInterval(sendUpdates, 2000);
 
           // Cleanup on client disconnect
           req.on('close', () => {
