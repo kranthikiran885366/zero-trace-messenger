@@ -6,7 +6,7 @@ const { verifyToken } = require('../middleware/auth');
 const router = express.Router();
 
 // Create a new room
-router.post('/create', authMiddleware, async (req, res) => {
+router.post('/create', verifyToken, async (req, res) => {
   try {
     const {
       name,
