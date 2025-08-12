@@ -13,10 +13,10 @@ import { useAuth } from '@/contexts/AuthContext';
 
 
 const UserAuth = () => {
-  const { session, createSession, updateSession, clearSession } = useAuth();
+  const { user, isAuthenticated, createAnonymousSession, logout, updatePreferences } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [isCreatingSession, setIsCreatingSession] = useState(!session);
+  const [isCreatingSession, setIsCreatingSession] = useState(!isAuthenticated);
   const [nickname, setNickname] = useState('');
   const [showSettings, setShowSettings] = useState(false);
 
