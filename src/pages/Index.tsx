@@ -92,14 +92,30 @@ const Index = () => {
 
     const eventSource = connectSSE();
 
-    // Fallback HTTP polling in case WebSocket fails
+    // Track if we have an active HTTP request to prevent overlaps
+    let isHttpRequestActive = false;
+
+    // Fallback HTTP polling in case SSE fails
     const loadStatsHTTP = async () => {
+      // Prevent multiple simultaneous requests
+      if (isHttpRequestActive) {
+        console.log('📊 HTTP request already active, skipping...');
+        return;
+      }
+
+      // Only use HTTP fallback if SSE is not working
+      if (eventSource && eventSource.readyState === EventSource.OPEN) {
+        return;
+      }
+
+      isHttpRequestActive = true;
+
       try {
         const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
         const statsUrl = `${apiUrl}/api/auth/stats`;
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // Reduced timeout
 
         const response = await fetch(statsUrl, {
           method: 'GET',
@@ -117,27 +133,32 @@ const Index = () => {
           const data = await response.json();
 
           if (data.success && data.stats) {
-            // Only update if SSE is not connected
-            if (!eventSource || eventSource.readyState !== EventSource.OPEN) {
-              console.log('📊 Using HTTP fallback for stats:', data.stats);
-              setStats({
-                activeUsers: data.stats.activeUsers || 0,
-                totalRooms: data.stats.totalRooms || 0,
-                messagesSent: data.stats.messagesSent || 0,
-                filesShared: data.stats.filesShared || 0,
-                onlineUsers: data.stats.onlineUsers || 0
-              });
-            }
+            console.log('📊 HTTP fallback stats received:', data.stats);
+            setStats({
+              activeUsers: data.stats.activeUsers || 0,
+              totalRooms: data.stats.totalRooms || 0,
+              messagesSent: data.stats.messagesSent || 0,
+              filesShared: data.stats.filesShared || 0,
+              onlineUsers: data.stats.onlineUsers || 0
+            });
+            setConnectionStatus('connected');
           }
         } else {
           console.warn(`⚠️ HTTP stats failed: ${response.status} ${response.statusText}`);
+          setConnectionStatus('error');
         }
       } catch (error) {
         if (error.name === 'AbortError') {
           console.warn('⚠️ HTTP stats request timed out');
+        } else if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+          console.warn('⚠️ Network error - unable to reach server');
+          setConnectionStatus('disconnected');
         } else {
           console.warn('⚠️ HTTP stats fallback failed:', error.message || error);
+          setConnectionStatus('error');
         }
+      } finally {
+        isHttpRequestActive = false;
       }
     };
 
