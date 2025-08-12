@@ -44,7 +44,7 @@ const Index = () => {
   
   // Real-time Server-Sent Events connection for live updates
   useEffect(() => {
-    console.log('🚀 Initializing real-time connection...');
+    console.log('�� Initializing real-time connection...');
 
     // Robust SSE connection with better error handling
     const connectSSE = () => {
@@ -157,6 +157,7 @@ const Index = () => {
               onlineUsers: data.stats.onlineUsers || 0
             });
             setConnectionStatus('connected');
+            retryCount = 0; // Reset retry count on success
           }
         } else {
           console.warn(`⚠️ HTTP stats failed: ${response.status} ${response.statusText}`);
