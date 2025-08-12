@@ -88,8 +88,10 @@ const Index = () => {
           const data = await response.json();
 
           if (data.success && data.stats) {
-            // Only update if WebSocket is not connected
-            if (realTimeClient.getConnectionState() !== 'connected') {
+            // Only update if SSE is not connected
+            const sseState = realTimeClient.getConnectionState();
+            if (sseState !== 'connected') {
+              console.log('📊 Using HTTP fallback for stats:', data.stats);
               setStats({
                 activeUsers: data.stats.activeUsers || 0,
                 totalRooms: data.stats.totalRooms || 0,
@@ -99,6 +101,8 @@ const Index = () => {
               });
             }
           }
+        } else {
+          console.warn(`⚠️ HTTP stats failed: ${response.status} ${response.statusText}`);
         }
       } catch (error) {
         if (error.name === 'AbortError') {
