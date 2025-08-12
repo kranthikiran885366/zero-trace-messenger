@@ -163,7 +163,7 @@ const UserAuth = () => {
                   <Settings className="mr-2 h-4 w-4" />
                   Settings
                 </Button>
-                <Button variant="destructive" onClick={clearSession}>
+                <Button variant="destructive" onClick={logout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   End Session
                 </Button>
