@@ -47,6 +47,7 @@ const Index = () => {
 
         if (!apiUrl || apiUrl.includes('securechat.app')) {
           // If no valid API URL or using demo URL, skip API call and use demo data
+          console.info('🚀 SecureChat running in demo mode with simulated data');
           throw new Error('Using demo mode - no backend API configured');
         }
 
