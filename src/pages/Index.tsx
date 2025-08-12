@@ -533,8 +533,18 @@ const Index = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-br from-primary/10 to-accent/10">
-        <div className="container mx-auto px-4 text-center">
+      <section className="py-20 bg-gradient-to-br from-primary/10 to-accent/10 relative overflow-hidden">
+        {/* CTA Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.pexels.com/photos/9783812/pexels-photo-9783812.jpeg?auto=compress&cs=tinysrgb&w=1920"
+            alt="Secure communication background"
+            className="w-full h-full object-cover opacity-10"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20" />
+        </div>
+
+        <div className="container mx-auto px-4 text-center relative z-10">
           <div className="max-w-3xl mx-auto space-y-8">
             <h2 className="text-3xl lg:text-4xl font-bold">
               Ready to Start Secure Communication?
