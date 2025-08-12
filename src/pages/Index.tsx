@@ -39,17 +39,42 @@ const Index = () => {
   const [nickname, setNickname] = useState('');
   const [showNicknameDialog, setShowNicknameDialog] = useState(false);
   
-  // Load real-time statistics from backend
+  // Real-time WebSocket connection for live updates
   useEffect(() => {
-    const loadStats = async () => {
+    const realTimeClient = getRealTimeClient();
+
+    // Set up real-time stats updates via WebSocket
+    const handleStatsUpdate = (newStats: RealTimeStats) => {
+      console.log('📊 Real-time stats update via WebSocket:', newStats);
+      setStats({
+        activeUsers: newStats.activeUsers,
+        totalRooms: newStats.totalRooms,
+        messagesSent: newStats.messagesSent,
+        filesShared: newStats.filesShared,
+        onlineUsers: newStats.onlineUsers
+      });
+    };
+
+    const handleConnectionChange = (status: { status: string }) => {
+      console.log('🔌 Real-time connection status:', status.status);
+      if (status.status === 'connected') {
+        // Request initial stats when connected
+        realTimeClient.requestStats();
+      }
+    };
+
+    // Subscribe to real-time events
+    realTimeClient.onStatsUpdate(handleStatsUpdate);
+    realTimeClient.onConnectionChange(handleConnectionChange);
+
+    // Fallback HTTP polling in case WebSocket fails
+    const loadStatsHTTP = async () => {
       try {
-        // Use the same origin for API calls since we're using Vite plugin
         const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
         const statsUrl = `${apiUrl}/api/auth/stats`;
-        console.log('🔄 Fetching real-time stats from:', statsUrl);
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
 
         const response = await fetch(statsUrl, {
           method: 'GET',
@@ -63,41 +88,35 @@ const Index = () => {
 
         if (response.ok) {
           const data = await response.json();
-          console.log('✅ Real-time stats received:', data);
 
           if (data.success && data.stats) {
-            setStats({
-              activeUsers: data.stats.activeUsers || 0,
-              totalRooms: data.stats.totalRooms || 0,
-              messagesSent: data.stats.messagesSent || 0,
-              filesShared: data.stats.filesShared || 0,
-              onlineUsers: data.stats.onlineUsers || 0
-            });
-            return;
+            // Only update if WebSocket is not connected
+            if (realTimeClient.getConnectionState() !== 'connected') {
+              setStats({
+                activeUsers: data.stats.activeUsers || 0,
+                totalRooms: data.stats.totalRooms || 0,
+                messagesSent: data.stats.messagesSent || 0,
+                filesShared: data.stats.filesShared || 0,
+                onlineUsers: data.stats.onlineUsers || 0
+              });
+            }
           }
         }
-
-        throw new Error(`API Error: ${response.status} ${response.statusText}`);
       } catch (error) {
-        console.error('❌ Failed to load real-time stats:', error);
-
-        // Initialize with zeros - will retry on next interval
-        setStats({
-          activeUsers: 0,
-          totalRooms: 0,
-          messagesSent: 0,
-          filesShared: 0,
-          onlineUsers: 0
-        });
+        console.warn('⚠️ HTTP stats fallback failed:', error);
       }
     };
 
-    // Load immediately
-    loadStats();
+    // Initial load and fallback polling
+    loadStatsHTTP();
+    const httpInterval = setInterval(loadStatsHTTP, 5000);
 
-    // Update stats every 3 seconds for real-time feel
-    const interval = setInterval(loadStats, 3000);
-    return () => clearInterval(interval);
+    // Cleanup
+    return () => {
+      clearInterval(httpInterval);
+      realTimeClient.off('stats_update', handleStatsUpdate);
+      realTimeClient.off('connection', handleConnectionChange);
+    };
   }, []);
 
   // Animate numbers
