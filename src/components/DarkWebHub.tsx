@@ -380,7 +380,16 @@ const DarkWebHub = () => {
         </div>
         {/* Header */}
         <Card className="bg-gradient-to-r from-red-900/20 to-purple-900/20 border-red-500/30 backdrop-blur-sm relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+          {/* Background Image */}
+          <div className="absolute inset-0 z-0">
+            <img
+              src="https://images.pexels.com/photos/2538122/pexels-photo-2538122.jpeg?auto=compress&cs=tinysrgb&w=1920"
+              alt="Underground dark web background"
+              className="w-full h-full object-cover opacity-15"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-red-900/50 via-black/60 to-purple-900/50" />
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 z-10" />
           <CardHeader className="text-center relative">
             <CardTitle className="text-5xl flex items-center justify-center gap-4 mb-2">
               <div className="relative">
