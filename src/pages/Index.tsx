@@ -211,6 +211,7 @@ const Index = () => {
     // Cleanup
     return () => {
       clearInterval(httpInterval);
+      clearInterval(healthCheckInterval);
       if (eventSource) {
         console.log('🔌 Closing SSE connection');
         eventSource.close();
