@@ -1,6 +1,123 @@
 // Vite plugin to provide real-time API data without external server
 
 export function apiPlugin() {
+  // Real-time room management
+  class RealTimeRoomManager {
+    constructor() {
+      this.rooms = new Map();
+      this.messages = new Map();
+      this.participants = new Map();
+      this.initializeRooms();
+      this.startActivity();
+    }
+
+    initializeRooms() {
+      const initialRooms = [
+        { name: 'General Discussion', maxParticipants: 50, isPrivate: false },
+        { name: 'Tech Talk', maxParticipants: 30, isPrivate: false },
+        { name: 'Private Group', maxParticipants: 10, isPrivate: true }
+      ];
+
+      initialRooms.forEach((roomData, index) => {
+        const roomId = `room_${Date.now()}_${index}`;
+        const room = {
+          id: roomId,
+          name: roomData.name,
+          createdAt: Date.now(),
+          participants: [],
+          maxParticipants: roomData.maxParticipants,
+          isPrivate: roomData.isPrivate,
+          isActive: true,
+          messageCount: Math.floor(Math.random() * 50)
+        };
+
+        this.rooms.set(roomId, room);
+        this.messages.set(roomId, []);
+        this.participants.set(roomId, new Set());
+
+        // Add some participants
+        for (let i = 0; i < Math.floor(Math.random() * 8) + 2; i++) {
+          this.participants.get(roomId).add(`user_${Date.now()}_${i}`);
+        }
+      });
+    }
+
+    startActivity() {
+      setInterval(() => {
+        // Simulate room activity
+        this.rooms.forEach((room, roomId) => {
+          if (Math.random() < 0.3) {
+            room.messageCount++;
+
+            const message = {
+              id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+              content: `Live message ${Date.now()}`,
+              timestamp: Date.now(),
+              userId: Array.from(this.participants.get(roomId))[0]
+            };
+
+            const roomMessages = this.messages.get(roomId);
+            roomMessages.push(message);
+
+            if (roomMessages.length > 50) {
+              this.messages.set(roomId, roomMessages.slice(-25));
+            }
+          }
+        });
+      }, 2000);
+    }
+
+    getAllRooms() {
+      return Array.from(this.rooms.values());
+    }
+
+    getRoom(roomId) {
+      return this.rooms.get(roomId);
+    }
+
+    getRoomMessages(roomId) {
+      return this.messages.get(roomId) || [];
+    }
+
+    getRoomParticipants(roomId) {
+      return Array.from(this.participants.get(roomId) || []);
+    }
+
+    createRoom(roomData) {
+      const roomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+      const room = {
+        id: roomId,
+        name: roomData.name || 'New Room',
+        createdAt: Date.now(),
+        participants: [],
+        maxParticipants: roomData.maxParticipants || 25,
+        isPrivate: roomData.isPrivate || false,
+        isActive: true,
+        messageCount: 0
+      };
+
+      this.rooms.set(roomId, room);
+      this.messages.set(roomId, []);
+      this.participants.set(roomId, new Set());
+
+      return room;
+    }
+
+    getStats() {
+      const totalRooms = this.rooms.size;
+      const totalParticipants = Array.from(this.participants.values())
+        .reduce((total, participants) => total + participants.size, 0);
+      const totalMessages = Array.from(this.messages.values())
+        .reduce((total, messages) => total + messages.length, 0);
+
+      return {
+        totalRooms,
+        totalParticipants,
+        totalMessages
+      };
+    }
+  }
+
   // In-memory real-time data
   class RealTimeDB {
     constructor() {
