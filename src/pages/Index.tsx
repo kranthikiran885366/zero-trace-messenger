@@ -99,7 +99,11 @@ const Index = () => {
           }
         }
       } catch (error) {
-        console.warn('⚠�� HTTP stats fallback failed:', error);
+        if (error.name === 'AbortError') {
+          console.warn('⚠️ HTTP stats request timed out');
+        } else {
+          console.warn('⚠️ HTTP stats fallback failed:', error.message || error);
+        }
       }
     };
 
