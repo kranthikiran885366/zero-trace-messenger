@@ -45,51 +45,55 @@ export function apiPlugin() {
     
     simulateActivity() {
       setInterval(() => {
-        // Simulate real-time user activity
-        if (Math.random() < 0.4) {
+        // More aggressive user activity simulation
+        if (Math.random() < 0.7) {
           const newUserId = `user_${Date.now() % 10000}`;
           this.users.add(newUserId);
-          
-          if (this.users.size > 15 && Math.random() < 0.3) {
+
+          if (this.users.size > 25 && Math.random() < 0.4) {
             const usersArray = Array.from(this.users);
             const userToRemove = usersArray[Math.floor(Math.random() * usersArray.length)];
             this.users.delete(userToRemove);
           }
         }
-        
-        // Add new messages
-        if (Math.random() < 0.6) {
+
+        // More frequent message activity
+        if (Math.random() < 0.8) {
           this.messages.push({
             id: this.messages.length,
             content: `Live message ${Date.now()}`,
             timestamp: Date.now()
           });
-          
-          if (this.messages.length > 50) {
-            this.messages = this.messages.slice(-30);
+
+          if (this.messages.length > 100) {
+            this.messages = this.messages.slice(-50);
           }
         }
-        
-        // Add new files
-        if (Math.random() < 0.2) {
+
+        // More file sharing activity
+        if (Math.random() < 0.4) {
           this.files.push({
             id: this.files.length,
-            name: `live_file_${Date.now()}.doc`,
+            name: `live_file_${Date.now()}.${['pdf', 'doc', 'jpg', 'png', 'zip'][Math.floor(Math.random() * 5)]}`,
             timestamp: Date.now()
           });
-          
-          if (this.files.length > 20) {
-            this.files = this.files.slice(-10);
+
+          if (this.files.length > 30) {
+            this.files = this.files.slice(-15);
           }
         }
-        
-        // Manage rooms
-        if (Math.random() < 0.1) {
-          if (this.rooms.size < 8) {
+
+        // Dynamic room management
+        if (Math.random() < 0.3) {
+          if (this.rooms.size < 12) {
             this.rooms.add(`room_${Date.now() % 1000}`);
+          } else if (this.rooms.size > 15 && Math.random() < 0.2) {
+            const roomsArray = Array.from(this.rooms);
+            const roomToRemove = roomsArray[Math.floor(Math.random() * roomsArray.length)];
+            this.rooms.delete(roomToRemove);
           }
         }
-      }, 2000);
+      }, 1500); // Faster updates every 1.5 seconds
     }
     
     getStats() {
