@@ -112,7 +112,7 @@ const UserAuth = () => {
     );
   }
 
-  if (!session) return null;
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-background p-4">
