@@ -99,15 +99,20 @@ class RealTimeSSEClient {
   private handleReconnect() {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       console.error('❌ Max SSE reconnection attempts reached');
+      this.connectionState = 'error';
+      this.emit('connection', { status: 'failed' });
       return;
     }
 
     this.reconnectAttempts++;
-    console.log(`🔄 Attempting to reconnect SSE (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+    const delay = Math.min(this.reconnectInterval * Math.pow(2, this.reconnectAttempts - 1), 30000); // Exponential backoff, max 30s
+    console.log(`🔄 Attempting to reconnect SSE (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${delay}ms...`);
 
     setTimeout(() => {
-      this.connect();
-    }, this.reconnectInterval * this.reconnectAttempts);
+      if (this.connectionState === 'disconnected' || this.connectionState === 'error') {
+        this.connect();
+      }
+    }, delay);
   }
 
   on(eventType: string, callback: Function) {
