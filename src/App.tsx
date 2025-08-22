@@ -69,6 +69,8 @@ const AppRoutes: React.FC = () => {
       <Route path="/terms" element={<Terms />} />
       <Route path="/app-modes" element={<AppModes />} />
       <Route path="/auth" element={<UserAuth />} />
+      <Route path="/signin" element={<SignIn />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/join" element={<JoinRoom />} />
 
       {/* Protected routes */}
