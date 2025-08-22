@@ -25,7 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
 const SignIn = () => {
-  const { login, register, createAnonymousSession, isLoading, isAuthenticated } = useAuth();
+  const { login, register, loginWithGoogle, loginWithGithub, createAnonymousSession, isLoading, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   
