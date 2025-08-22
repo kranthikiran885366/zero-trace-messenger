@@ -18,6 +18,8 @@ import Chat from '@/pages/Chat';
 import FileShare from '@/pages/FileShare';
 import VideoCall from '@/pages/VideoCall';
 import UserAuth from '@/pages/UserAuth';
+import SignIn from '@/pages/SignIn';
+import ForgotPassword from '@/pages/ForgotPassword';
 import RoomManager from '@/pages/RoomManager';
 import DarkWebHub from '@/pages/DarkWebHub';
 import NotFound from '@/pages/NotFound';
