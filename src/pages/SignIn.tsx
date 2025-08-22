@@ -261,6 +261,14 @@ const SignIn = () => {
 
             {/* Email/Password Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
+              {!isFirebaseAvailable && (
+                <Alert className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20">
+                  <Shield className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <AlertDescription className="text-sm text-blue-800 dark:text-blue-200">
+                    Email/password authentication requires Firebase installation.
+                  </AlertDescription>
+                </Alert>
+              )}
               {isSignUp && (
                 <>
                   <div className="space-y-2">
