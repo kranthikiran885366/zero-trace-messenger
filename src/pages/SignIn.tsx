@@ -416,10 +416,10 @@ const SignIn = () => {
               <Button
                 type="submit"
                 className="w-full bg-primary hover:bg-primary/90"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !isFirebaseAvailable}
               >
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isSignUp ? 'Create Account' : 'Sign In'}
+                {!isFirebaseAvailable ? 'Firebase Required' : (isSignUp ? 'Create Account' : 'Sign In')}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </form>
