@@ -1,17 +1,45 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { api, wsClient, User, handleAPIError } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { 
+  onAuthStateChange,
+  signInWithEmail,
+  signUpWithEmail,
+  signInWithGoogle,
+  signInWithGithub,
+  createAnonymousUser,
+  getUserProfile,
+  updateUserProfile,
+  logOut,
+  resetPassword,
+  changePassword,
+  deleteUserAccount,
+  UserProfile
+} from '@/lib/firebase';
+import { User as FirebaseUser } from 'firebase/auth';
+
+// Extend the UserProfile interface to match existing User interface
+export interface User extends UserProfile {
+  id: string;
+  _id: string;
+  userId: string;
+  fingerprint: string;
+}
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, nickname: string) => Promise<void>;
+  register: (email: string, password: string, displayName: string, nickname: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+  loginWithGithub: () => Promise<void>;
   createAnonymousSession: (nickname: string, preferences?: any) => Promise<void>;
   logout: () => Promise<void>;
   updatePreferences: (preferences: Partial<User['preferences']>) => Promise<void>;
   refreshUser: () => Promise<void>;
+  resetUserPassword: (email: string) => Promise<void>;
+  changeUserPassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  deleteAccount: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -35,42 +63,84 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const isAuthenticated = !!user;
 
+  // Convert Firebase user and profile to our User interface
+  const createUserFromProfile = (firebaseUser: FirebaseUser | null, profile: UserProfile | null): User | null => {
+    if (!firebaseUser && !profile) return null;
+    
+    if (profile?.isAnonymous) {
+      // For anonymous users, use the profile data
+      return {
+        ...profile,
+        id: profile.uid,
+        _id: profile.uid,
+        userId: profile.uid,
+        fingerprint: `fp_${profile.uid.slice(-12)}`
+      };
+    }
+    
+    if (!firebaseUser || !profile) return null;
+    
+    return {
+      ...profile,
+      id: firebaseUser.uid,
+      _id: firebaseUser.uid,
+      userId: firebaseUser.uid,
+      fingerprint: `fp_${firebaseUser.uid.slice(-12)}`
+    };
+  };
+
   // Initialize authentication state
   useEffect(() => {
     const initializeAuth = async () => {
       try {
         setIsLoading(true);
         
-        // Check if user is already authenticated
-        const storedUser = api.getUser();
-        if (storedUser) {
-          // Verify token with server
-          const { valid, user: verifiedUser } = await api.verifyToken();
-          
-          if (valid && verifiedUser) {
-            setUser(verifiedUser);
-            
-            // Connect WebSocket
-            const token = localStorage.getItem('auth_token');
-            if (token) {
-              try {
-                await wsClient.connect(token);
-                setupWebSocketListeners();
-              } catch (error) {
-                console.error('WebSocket connection failed:', error);
-              }
-            }
-          } else {
-            // Token is invalid, clear auth
-            api.clearAuth();
-            setUser(null);
-          }
+        // Check for anonymous session first
+        const anonymousSession = localStorage.getItem('anonymousSession');
+        const anonymousUserData = localStorage.getItem('anonymousUser');
+        
+        if (anonymousSession === 'true' && anonymousUserData) {
+          const anonymousUser = JSON.parse(anonymousUserData);
+          const user = createUserFromProfile(null, anonymousUser);
+          setUser(user);
+          setIsLoading(false);
+          return;
         }
+        
+        // Set up Firebase auth state listener
+        const unsubscribe = onAuthStateChange(async (firebaseUser) => {
+          try {
+            if (firebaseUser) {
+              // User is signed in
+              const profile = await getUserProfile(firebaseUser.uid);
+              if (profile) {
+                const user = createUserFromProfile(firebaseUser, profile);
+                setUser(user);
+                
+                // Update last active timestamp
+                await updateUserProfile(firebaseUser.uid, {
+                  lastActive: new Date(),
+                  status: 'online'
+                });
+              }
+            } else {
+              // User is signed out
+              setUser(null);
+            }
+          } catch (error) {
+            console.error('Error in auth state change:', error);
+            setUser(null);
+          } finally {
+            setIsLoading(false);
+          }
+        });
+        
+        // Cleanup function
+        return () => unsubscribe();
+        
       } catch (error) {
-        console.error('Auth initialization error:', error);
-        api.clearAuth();
+        console.error('Error initializing auth:', error);
         setUser(null);
-      } finally {
         setIsLoading(false);
       }
     };
@@ -78,234 +148,347 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, []);
 
-  // Setup WebSocket event listeners
-  const setupWebSocketListeners = () => {
-    // Handle connection events
-    wsClient.on('connect', () => {
-      console.log('✅ Real-time connection established');
-      toast({
-        title: "Connected",
-        description: "Real-time features are now active",
-      });
-    });
-
-    wsClient.on('disconnect', () => {
-      console.log('🔌 Real-time connection lost');
-      toast({
-        variant: "destructive",
-        title: "Connection Lost",
-        description: "Attempting to reconnect...",
-      });
-    });
-
-    wsClient.on('error', (error: any) => {
-      console.error('WebSocket error:', error);
-      toast({
-        variant: "destructive",
-        title: "Connection Error",
-        description: "Failed to establish real-time connection",
-      });
-    });
-
-    // Handle user-specific events
-    wsClient.on('user_updated', (updatedUser: User) => {
-      setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-    });
-
-    wsClient.on('force_logout', (reason: string) => {
-      toast({
-        variant: "destructive",
-        title: "Session Ended",
-        description: reason || "You have been logged out",
-      });
-      logout();
-    });
-  };
-
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<void> => {
     try {
       setIsLoading(true);
-      const { user: loggedInUser, token } = await api.login(email, password);
+      const firebaseUser = await signInWithEmail(email, password);
       
-      setUser(loggedInUser);
+      // Get user profile
+      const profile = await getUserProfile(firebaseUser.uid);
+      if (profile) {
+        const user = createUserFromProfile(firebaseUser, profile);
+        setUser(user);
+        
+        toast({
+          title: "Welcome Back!",
+          description: `Signed in as ${profile.displayName}`,
+          variant: "default"
+        });
+      }
+    } catch (error: any) {
+      console.error('Login error:', error);
+      let errorMessage = 'Failed to sign in. Please try again.';
       
-      // Connect WebSocket
-      await wsClient.connect(token);
-      setupWebSocketListeners();
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email address.';
+      } else if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Incorrect password. Please try again.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many failed attempts. Please try again later.';
+      }
       
       toast({
-        title: "Welcome back!",
-        description: `Logged in as ${loggedInUser.nickname}`,
+        title: "Sign In Failed",
+        description: errorMessage,
+        variant: "destructive"
       });
       
-    } catch (error) {
-      handleAPIError(error as Error, "Login failed");
-      throw error;
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const register = async (email: string, password: string, nickname: string) => {
+  const register = async (email: string, password: string, displayName: string, nickname: string): Promise<void> => {
     try {
       setIsLoading(true);
-      const { user: newUser, token } = await api.register(email, password, nickname);
+      const firebaseUser = await signUpWithEmail(email, password, displayName);
       
-      setUser(newUser);
+      // Get the created user profile
+      const profile = await getUserProfile(firebaseUser.uid);
+      if (profile) {
+        const user = createUserFromProfile(firebaseUser, profile);
+        setUser(user);
+        
+        toast({
+          title: "Account Created!",
+          description: `Welcome to SecureChat, ${displayName}!`,
+          variant: "default"
+        });
+      }
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      let errorMessage = 'Failed to create account. Please try again.';
       
-      // Connect WebSocket
-      await wsClient.connect(token);
-      setupWebSocketListeners();
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'An account with this email already exists.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'Password is too weak. Please choose a stronger password.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Please enter a valid email address.';
+      }
       
       toast({
-        title: "Account Created!",
-        description: `Welcome to SecureChat, ${newUser.nickname}!`,
+        title: "Registration Failed",
+        description: errorMessage,
+        variant: "destructive"
       });
       
-    } catch (error) {
-      handleAPIError(error as Error, "Registration failed");
-      throw error;
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const createAnonymousSession = async (nickname: string, preferences = {}) => {
+  const loginWithGoogle = async (): Promise<void> => {
     try {
       setIsLoading(true);
-      const { user: anonUser, token } = await api.createAnonymousSession(nickname, preferences);
+      const firebaseUser = await signInWithGoogle();
       
-      setUser(anonUser);
+      const profile = await getUserProfile(firebaseUser.uid);
+      if (profile) {
+        const user = createUserFromProfile(firebaseUser, profile);
+        setUser(user);
+        
+        toast({
+          title: "Google Sign In Successful!",
+          description: `Welcome, ${profile.displayName}!`,
+          variant: "default"
+        });
+      }
+    } catch (error: any) {
+      console.error('Google sign in error:', error);
+      let errorMessage = 'Failed to sign in with Google. Please try again.';
       
-      // Connect WebSocket
-      await wsClient.connect(token);
-      setupWebSocketListeners();
+      if (error.code === 'auth/popup-closed-by-user') {
+        errorMessage = 'Sign in cancelled.';
+      } else if (error.code === 'auth/popup-blocked') {
+        errorMessage = 'Pop-up blocked. Please allow pop-ups and try again.';
+      }
+      
+      toast({
+        title: "Google Sign In Failed",
+        description: errorMessage,
+        variant: "destructive"
+      });
+      
+      throw new Error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loginWithGithub = async (): Promise<void> => {
+    try {
+      setIsLoading(true);
+      const firebaseUser = await signInWithGithub();
+      
+      const profile = await getUserProfile(firebaseUser.uid);
+      if (profile) {
+        const user = createUserFromProfile(firebaseUser, profile);
+        setUser(user);
+        
+        toast({
+          title: "GitHub Sign In Successful!",
+          description: `Welcome, ${profile.displayName}!`,
+          variant: "default"
+        });
+      }
+    } catch (error: any) {
+      console.error('GitHub sign in error:', error);
+      let errorMessage = 'Failed to sign in with GitHub. Please try again.';
+      
+      if (error.code === 'auth/popup-closed-by-user') {
+        errorMessage = 'Sign in cancelled.';
+      } else if (error.code === 'auth/popup-blocked') {
+        errorMessage = 'Pop-up blocked. Please allow pop-ups and try again.';
+      }
+      
+      toast({
+        title: "GitHub Sign In Failed",
+        description: errorMessage,
+        variant: "destructive"
+      });
+      
+      throw new Error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const createAnonymousSession = async (nickname: string, preferences = {}): Promise<void> => {
+    try {
+      setIsLoading(true);
+      const anonymousUser = await createAnonymousUser(nickname);
+      const user = createUserFromProfile(null, anonymousUser);
+      setUser(user);
       
       toast({
         title: "Anonymous Session Created",
-        description: `Welcome, ${anonUser.nickname}! Your session is secure and private.`,
+        description: `Welcome, ${nickname}! Your session is now active.`,
+        variant: "default"
       });
-      
-    } catch (error) {
-      handleAPIError(error as Error, "Failed to create anonymous session");
+    } catch (error: any) {
+      console.error('Anonymous session error:', error);
+      toast({
+        title: "Session Creation Failed",
+        description: error.message || 'Failed to create anonymous session.',
+        variant: "destructive"
+      });
       throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = async () => {
+  const logout = async (): Promise<void> => {
     try {
       setIsLoading(true);
-      
-      // Disconnect WebSocket first
-      wsClient.disconnect();
-      
-      // Logout from server
-      await api.logout();
-      
-      // Clear local state
+      await logOut();
       setUser(null);
       
       toast({
-        title: "Logged Out",
-        description: "You have been safely logged out",
+        title: "Signed Out",
+        description: "You have been signed out successfully.",
+        variant: "default"
       });
-      
-    } catch (error) {
-      // Even if logout fails on server, clear local state
-      api.clearAuth();
-      setUser(null);
-      wsClient.disconnect();
-      
+    } catch (error: any) {
       console.error('Logout error:', error);
+      toast({
+        title: "Sign Out Failed",
+        description: "An error occurred while signing out.",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const updatePreferences = async (preferences: Partial<User['preferences']>) => {
+  const updatePreferences = async (preferences: Partial<User['preferences']>): Promise<void> => {
+    if (!user) return;
+    
     try {
-      const { preferences: updatedPreferences } = await api.updatePreferences(preferences);
-      
-      if (user) {
+      if (user.isAnonymous) {
+        // Update anonymous user locally
         const updatedUser = {
           ...user,
-          preferences: updatedPreferences
+          preferences: { ...user.preferences, ...preferences }
         };
         setUser(updatedUser);
+        localStorage.setItem('anonymousUser', JSON.stringify(updatedUser));
+      } else {
+        // Update Firebase user
+        await updateUserProfile(user.uid, { preferences: { ...user.preferences, ...preferences } });
+        setUser(prev => prev ? { ...prev, preferences: { ...prev.preferences, ...preferences } } : null);
       }
       
       toast({
         title: "Preferences Updated",
-        description: "Your settings have been saved",
+        description: "Your preferences have been saved.",
+        variant: "default"
       });
-      
-    } catch (error) {
-      handleAPIError(error as Error, "Failed to update preferences");
+    } catch (error: any) {
+      console.error('Update preferences error:', error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update preferences.",
+        variant: "destructive"
+      });
       throw error;
     }
   };
 
-  const refreshUser = async () => {
+  const refreshUser = async (): Promise<void> => {
+    if (!user) return;
+    
     try {
-      const { valid, user: refreshedUser } = await api.verifyToken();
-      
-      if (valid && refreshedUser) {
-        setUser(refreshedUser);
+      if (user.isAnonymous) {
+        // For anonymous users, just update the timestamp
+        const updatedUser = { ...user, lastActive: new Date() };
+        setUser(updatedUser);
+        localStorage.setItem('anonymousUser', JSON.stringify(updatedUser));
       } else {
-        // Token is invalid, logout
-        await logout();
+        // Refresh Firebase user profile
+        const profile = await getUserProfile(user.uid);
+        if (profile) {
+          const updatedUser = createUserFromProfile(null, profile);
+          setUser(updatedUser);
+        }
       }
     } catch (error) {
-      console.error('Failed to refresh user:', error);
-      await logout();
+      console.error('Refresh user error:', error);
     }
   };
 
-  // Auto-refresh token before expiration
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    const refreshInterval = setInterval(async () => {
-      try {
-        await api.refreshToken();
-      } catch (error) {
-        console.error('Token refresh failed:', error);
-        await logout();
-      }
-    }, 30 * 60 * 1000); // Refresh every 30 minutes
-
-    return () => clearInterval(refreshInterval);
-  }, [isAuthenticated]);
-
-  // Update user activity
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    const updateActivity = () => {
-      if (wsClient.isConnected()) {
-        wsClient.emit('user_activity', {});
-      }
-    };
-
-    // Update activity on user interactions
-    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
-    events.forEach(event => {
-      document.addEventListener(event, updateActivity, { passive: true });
-    });
-
-    // Send periodic activity updates
-    const activityInterval = setInterval(updateActivity, 60000); // Every minute
-
-    return () => {
-      events.forEach(event => {
-        document.removeEventListener(event, updateActivity);
+  const resetUserPassword = async (email: string): Promise<void> => {
+    try {
+      await resetPassword(email);
+      toast({
+        title: "Password Reset Email Sent",
+        description: "Check your email for password reset instructions.",
+        variant: "default"
       });
-      clearInterval(activityInterval);
-    };
-  }, [isAuthenticated]);
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      let errorMessage = 'Failed to send password reset email.';
+      
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email address.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Please enter a valid email address.';
+      }
+      
+      toast({
+        title: "Password Reset Failed",
+        description: errorMessage,
+        variant: "destructive"
+      });
+      
+      throw new Error(errorMessage);
+    }
+  };
+
+  const changeUserPassword = async (currentPassword: string, newPassword: string): Promise<void> => {
+    try {
+      await changePassword(currentPassword, newPassword);
+      toast({
+        title: "Password Changed",
+        description: "Your password has been updated successfully.",
+        variant: "default"
+      });
+    } catch (error: any) {
+      console.error('Change password error:', error);
+      let errorMessage = 'Failed to change password.';
+      
+      if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Current password is incorrect.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'New password is too weak.';
+      }
+      
+      toast({
+        title: "Password Change Failed",
+        description: errorMessage,
+        variant: "destructive"
+      });
+      
+      throw new Error(errorMessage);
+    }
+  };
+
+  const deleteAccount = async (): Promise<void> => {
+    try {
+      await deleteUserAccount();
+      setUser(null);
+      
+      toast({
+        title: "Account Deleted",
+        description: "Your account has been permanently deleted.",
+        variant: "default"
+      });
+    } catch (error: any) {
+      console.error('Delete account error:', error);
+      toast({
+        title: "Account Deletion Failed",
+        description: "Failed to delete account. Please try again.",
+        variant: "destructive"
+      });
+      
+      throw error;
+    }
+  };
 
   const value: AuthContextType = {
     user,
@@ -313,10 +496,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isLoading,
     login,
     register,
+    loginWithGoogle,
+    loginWithGithub,
     createAnonymousSession,
     logout,
     updatePreferences,
-    refreshUser
+    refreshUser,
+    resetUserPassword,
+    changeUserPassword,
+    deleteAccount
   };
 
   return (
@@ -325,5 +513,3 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-
-export default AuthContext;
