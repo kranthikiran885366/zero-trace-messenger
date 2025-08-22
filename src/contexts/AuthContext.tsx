@@ -15,7 +15,6 @@ import {
   deleteUserAccount,
   UserProfile
 } from '@/lib/firebase';
-import { User as FirebaseUser } from 'firebase/auth';
 
 // Extend the UserProfile interface to match existing User interface
 export interface User extends UserProfile {
@@ -29,6 +28,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isFirebaseAvailable: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, displayName: string, nickname: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
@@ -59,12 +59,28 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFirebaseAvailable, setIsFirebaseAvailable] = useState(false);
   const { toast } = useToast();
 
   const isAuthenticated = !!user;
 
+  // Check if Firebase is available
+  useEffect(() => {
+    try {
+      // Try to check if Firebase is properly installed
+      const firebaseAvailable = typeof onAuthStateChange === 'function';
+      setIsFirebaseAvailable(firebaseAvailable);
+      
+      if (!firebaseAvailable) {
+        console.warn('Firebase not available, only anonymous authentication supported');
+      }
+    } catch (error) {
+      setIsFirebaseAvailable(false);
+    }
+  }, []);
+
   // Convert Firebase user and profile to our User interface
-  const createUserFromProfile = (firebaseUser: FirebaseUser | null, profile: UserProfile | null): User | null => {
+  const createUserFromProfile = (firebaseUser: any | null, profile: UserProfile | null): User | null => {
     if (!firebaseUser && !profile) return null;
     
     if (profile?.isAnonymous) {
@@ -107,36 +123,46 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           return;
         }
         
-        // Set up Firebase auth state listener
-        const unsubscribe = onAuthStateChange(async (firebaseUser) => {
+        // Only set up Firebase auth state listener if Firebase is available
+        if (isFirebaseAvailable) {
           try {
-            if (firebaseUser) {
-              // User is signed in
-              const profile = await getUserProfile(firebaseUser.uid);
-              if (profile) {
-                const user = createUserFromProfile(firebaseUser, profile);
-                setUser(user);
-                
-                // Update last active timestamp
-                await updateUserProfile(firebaseUser.uid, {
-                  lastActive: new Date(),
-                  status: 'online'
-                });
+            const unsubscribe = onAuthStateChange(async (firebaseUser) => {
+              try {
+                if (firebaseUser) {
+                  // User is signed in
+                  const profile = await getUserProfile(firebaseUser.uid);
+                  if (profile) {
+                    const user = createUserFromProfile(firebaseUser, profile);
+                    setUser(user);
+                    
+                    // Update last active timestamp
+                    await updateUserProfile(firebaseUser.uid, {
+                      lastActive: new Date(),
+                      status: 'online'
+                    });
+                  }
+                } else {
+                  // User is signed out
+                  setUser(null);
+                }
+              } catch (error) {
+                console.error('Error in auth state change:', error);
+                setUser(null);
+              } finally {
+                setIsLoading(false);
               }
-            } else {
-              // User is signed out
-              setUser(null);
-            }
+            });
+            
+            // Cleanup function
+            return () => unsubscribe();
           } catch (error) {
-            console.error('Error in auth state change:', error);
-            setUser(null);
-          } finally {
+            console.error('Error setting up Firebase auth listener:', error);
             setIsLoading(false);
           }
-        });
-        
-        // Cleanup function
-        return () => unsubscribe();
+        } else {
+          // Firebase not available, just set loading to false
+          setIsLoading(false);
+        }
         
       } catch (error) {
         console.error('Error initializing auth:', error);
@@ -146,9 +172,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     initializeAuth();
-  }, []);
+  }, [isFirebaseAvailable]);
 
   const login = async (email: string, password: string): Promise<void> => {
+    if (!isFirebaseAvailable) {
+      throw new Error('Email authentication requires Firebase. Please install Firebase or use anonymous mode.');
+    }
+
     try {
       setIsLoading(true);
       const firebaseUser = await signInWithEmail(email, password);
@@ -169,7 +199,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Login error:', error);
       let errorMessage = 'Failed to sign in. Please try again.';
       
-      if (error.code === 'auth/user-not-found') {
+      if (error.message.includes('Firebase not installed')) {
+        errorMessage = 'Email authentication is not available. Please use anonymous mode.';
+      } else if (error.code === 'auth/user-not-found') {
         errorMessage = 'No account found with this email address.';
       } else if (error.code === 'auth/wrong-password') {
         errorMessage = 'Incorrect password. Please try again.';
@@ -192,6 +224,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const register = async (email: string, password: string, displayName: string, nickname: string): Promise<void> => {
+    if (!isFirebaseAvailable) {
+      throw new Error('Email registration requires Firebase. Please install Firebase or use anonymous mode.');
+    }
+
     try {
       setIsLoading(true);
       const firebaseUser = await signUpWithEmail(email, password, displayName);
@@ -212,7 +248,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Registration error:', error);
       let errorMessage = 'Failed to create account. Please try again.';
       
-      if (error.code === 'auth/email-already-in-use') {
+      if (error.message.includes('Firebase not installed')) {
+        errorMessage = 'Email registration is not available. Please use anonymous mode.';
+      } else if (error.code === 'auth/email-already-in-use') {
         errorMessage = 'An account with this email already exists.';
       } else if (error.code === 'auth/weak-password') {
         errorMessage = 'Password is too weak. Please choose a stronger password.';
@@ -233,6 +271,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const loginWithGoogle = async (): Promise<void> => {
+    if (!isFirebaseAvailable) {
+      throw new Error('Google authentication requires Firebase. Please install Firebase or use anonymous mode.');
+    }
+
     try {
       setIsLoading(true);
       const firebaseUser = await signInWithGoogle();
@@ -252,10 +294,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Google sign in error:', error);
       let errorMessage = 'Failed to sign in with Google. Please try again.';
       
-      if (error.code === 'auth/popup-closed-by-user') {
-        errorMessage = 'Sign in cancelled.';
-      } else if (error.code === 'auth/popup-blocked') {
-        errorMessage = 'Pop-up blocked. Please allow pop-ups and try again.';
+      if (error.message.includes('Firebase not installed')) {
+        errorMessage = 'Google authentication is not available. Please use anonymous mode.';
       }
       
       toast({
@@ -271,6 +311,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const loginWithGithub = async (): Promise<void> => {
+    if (!isFirebaseAvailable) {
+      throw new Error('GitHub authentication requires Firebase. Please install Firebase or use anonymous mode.');
+    }
+
     try {
       setIsLoading(true);
       const firebaseUser = await signInWithGithub();
@@ -290,10 +334,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('GitHub sign in error:', error);
       let errorMessage = 'Failed to sign in with GitHub. Please try again.';
       
-      if (error.code === 'auth/popup-closed-by-user') {
-        errorMessage = 'Sign in cancelled.';
-      } else if (error.code === 'auth/popup-blocked') {
-        errorMessage = 'Pop-up blocked. Please allow pop-ups and try again.';
+      if (error.message.includes('Firebase not installed')) {
+        errorMessage = 'GitHub authentication is not available. Please use anonymous mode.';
       }
       
       toast({
@@ -368,7 +410,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         };
         setUser(updatedUser);
         localStorage.setItem('anonymousUser', JSON.stringify(updatedUser));
-      } else {
+      } else if (isFirebaseAvailable) {
         // Update Firebase user
         await updateUserProfile(user.uid, { preferences: { ...user.preferences, ...preferences } });
         setUser(prev => prev ? { ...prev, preferences: { ...prev.preferences, ...preferences } } : null);
@@ -399,7 +441,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const updatedUser = { ...user, lastActive: new Date() };
         setUser(updatedUser);
         localStorage.setItem('anonymousUser', JSON.stringify(updatedUser));
-      } else {
+      } else if (isFirebaseAvailable) {
         // Refresh Firebase user profile
         const profile = await getUserProfile(user.uid);
         if (profile) {
@@ -413,6 +455,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const resetUserPassword = async (email: string): Promise<void> => {
+    if (!isFirebaseAvailable) {
+      throw new Error('Password reset requires Firebase. Please install Firebase.');
+    }
+
     try {
       await resetPassword(email);
       toast({
@@ -424,10 +470,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Password reset error:', error);
       let errorMessage = 'Failed to send password reset email.';
       
-      if (error.code === 'auth/user-not-found') {
-        errorMessage = 'No account found with this email address.';
-      } else if (error.code === 'auth/invalid-email') {
-        errorMessage = 'Please enter a valid email address.';
+      if (error.message.includes('Firebase not installed')) {
+        errorMessage = 'Password reset is not available. Please install Firebase.';
       }
       
       toast({
@@ -441,6 +485,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const changeUserPassword = async (currentPassword: string, newPassword: string): Promise<void> => {
+    if (!isFirebaseAvailable) {
+      throw new Error('Password change requires Firebase. Please install Firebase.');
+    }
+
     try {
       await changePassword(currentPassword, newPassword);
       toast({
@@ -450,25 +498,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
     } catch (error: any) {
       console.error('Change password error:', error);
-      let errorMessage = 'Failed to change password.';
-      
-      if (error.code === 'auth/wrong-password') {
-        errorMessage = 'Current password is incorrect.';
-      } else if (error.code === 'auth/weak-password') {
-        errorMessage = 'New password is too weak.';
-      }
-      
       toast({
         title: "Password Change Failed",
-        description: errorMessage,
+        description: "Failed to change password.",
         variant: "destructive"
       });
       
-      throw new Error(errorMessage);
+      throw new Error("Failed to change password.");
     }
   };
 
   const deleteAccount = async (): Promise<void> => {
+    if (!isFirebaseAvailable) {
+      throw new Error('Account deletion requires Firebase. Please install Firebase.');
+    }
+
     try {
       await deleteUserAccount();
       setUser(null);
@@ -494,6 +538,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     isAuthenticated,
     isLoading,
+    isFirebaseAvailable,
     login,
     register,
     loginWithGoogle,
