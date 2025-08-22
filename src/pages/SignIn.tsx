@@ -134,18 +134,10 @@ const SignIn = () => {
   const handleGoogleSignIn = async () => {
     setIsSubmitting(true);
     try {
-      // This will be implemented in the updated AuthContext
-      toast({
-        title: "Google Sign In",
-        description: "Google authentication will be implemented with Firebase.",
-        variant: "default"
-      });
+      await loginWithGoogle();
+      navigate('/');
     } catch (error: any) {
-      toast({
-        title: "Google Sign In Failed",
-        description: error.message || "Failed to sign in with Google.",
-        variant: "destructive"
-      });
+      // Error already handled in AuthContext
     } finally {
       setIsSubmitting(false);
     }
@@ -154,18 +146,10 @@ const SignIn = () => {
   const handleGithubSignIn = async () => {
     setIsSubmitting(true);
     try {
-      // This will be implemented in the updated AuthContext
-      toast({
-        title: "GitHub Sign In",
-        description: "GitHub authentication will be implemented with Firebase.",
-        variant: "default"
-      });
+      await loginWithGithub();
+      navigate('/');
     } catch (error: any) {
-      toast({
-        title: "GitHub Sign In Failed",
-        description: error.message || "Failed to sign in with GitHub.",
-        variant: "destructive"
-      });
+      // Error already handled in AuthContext
     } finally {
       setIsSubmitting(false);
     }
