@@ -277,9 +277,9 @@ const Navigation = () => {
               </DropdownMenu>
             ) : (
               <div className="flex items-center space-x-2">
-                <Button 
-                  variant="ghost" 
-                  onClick={() => navigate('/auth')}
+                <Button
+                  variant="ghost"
+                  onClick={() => navigate('/signin')}
                   className="hidden sm:inline-flex"
                 >
                   Sign In
