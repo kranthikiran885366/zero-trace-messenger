@@ -216,26 +216,39 @@ const SignIn = () => {
           </CardHeader>
           
           <CardContent className="space-y-6">
+            {/* Firebase Warning */}
+            {!isFirebaseAvailable && (
+              <Alert className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20">
+                <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                <AlertDescription className="text-sm text-amber-800 dark:text-amber-200">
+                  <strong>Limited Authentication:</strong> Firebase is not installed. Only anonymous sign-in is available.
+                  Install Firebase to enable full authentication features.
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Social Login Buttons */}
             <div className="space-y-3">
               <Button
                 variant="outline"
                 className="w-full bg-background/50 hover:bg-background/80 border-border/50"
                 onClick={handleGoogleSignIn}
-                disabled={isSubmitting}
+                disabled={isSubmitting || !isFirebaseAvailable}
               >
                 <Chrome className="mr-2 h-4 w-4" />
                 Continue with Google
+                {!isFirebaseAvailable && <span className="ml-auto text-xs text-muted-foreground">(Unavailable)</span>}
               </Button>
-              
+
               <Button
                 variant="outline"
                 className="w-full bg-background/50 hover:bg-background/80 border-border/50"
                 onClick={handleGithubSignIn}
-                disabled={isSubmitting}
+                disabled={isSubmitting || !isFirebaseAvailable}
               >
                 <Github className="mr-2 h-4 w-4" />
                 Continue with GitHub
+                {!isFirebaseAvailable && <span className="ml-auto text-xs text-muted-foreground">(Unavailable)</span>}
               </Button>
             </div>
 
