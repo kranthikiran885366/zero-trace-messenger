@@ -120,6 +120,43 @@ const WhatsAppLayout: React.FC<WhatsAppLayoutProps> = ({ roomId, currentChat }) 
     }
   ]);
 
+  // Map ChatContext messages to UI format
+  const mappedMessages: Message[] = (roomMessages || []).map((m) => {
+    const base: Message = {
+      id: m.messageId,
+      content: m.content,
+      userId: m.senderId,
+      username: m.senderNickname,
+      timestamp: new Date(m.createdAt),
+      type: (m.type === 'file' ? 'document' : (m.type as any)) || 'text',
+      isOwn: (user?.userId || user?.id) === m.senderId,
+      isRead: m.status === 'read',
+      isDelivered: ['delivered','read'].includes(m.status),
+      isSending: m.status === 'sending',
+      isEdited: !!m.metadata?.isEdited,
+      reactions: (m.reactions || []).map(r => ({ emoji: r.reaction, users: [r.userId] })),
+    };
+
+    if (['image','video','audio','file'].includes(m.type)) {
+      base.media = {
+        url: (m as any).metadata?.url || '',
+        thumbnail: m.metadata?.thumbnail,
+        duration: m.metadata?.duration,
+        size: m.metadata?.fileSize,
+        filename: m.metadata?.filename
+      };
+      base.type = m.type === 'file' ? 'document' : (m.type as any);
+    }
+
+    return base;
+  });
+
+  useEffect(() => {
+    if (currentRoom?.roomId) {
+      setSelectedChatId(currentRoom.roomId);
+    }
+  }, [currentRoom]);
+
   // Sample messages for the selected chat
   useEffect(() => {
     if (selectedChatId) {
@@ -402,11 +439,10 @@ const WhatsAppLayout: React.FC<WhatsAppLayoutProps> = ({ roomId, currentChat }) 
                   </Avatar>
                   
                   <div>
-                    <h3 className="font-semibold">{selectedChat.name}</h3>
+                    <h3 className="font-semibold">{currentRoom?.name || selectedChat.name}</h3>
                     <p className="text-xs text-muted-foreground">
-                      {isTyping ? 'typing...' : 
-                       selectedChat.isOnline ? 'online' : 
-                       selectedChat.lastSeen ? `last seen ${selectedChat.lastSeen.toLocaleTimeString()}` : 'offline'}
+                      {(typingUsers?.length || 0) > 0 ? 'typing...' :
+                        (onlineUsers?.length || 0) > 1 ? `${onlineUsers.length} online` : 'online'}
                     </p>
                   </div>
                   
@@ -438,22 +474,12 @@ const WhatsAppLayout: React.FC<WhatsAppLayoutProps> = ({ roomId, currentChat }) 
 
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-background/50 to-background">
-              {messages.map((message) => (
+              {(mappedMessages.length > 0 ? mappedMessages : messages).map((message) => (
                 <MessageBubble
                   key={message.id}
                   message={message}
                   onReact={(messageId, emoji) => {
-                    setMessages(prev => prev.map(m => 
-                      m.id === messageId 
-                        ? {
-                            ...m,
-                            reactions: [
-                              ...(m.reactions || []).filter(r => r.emoji !== emoji),
-                              { emoji, users: [user?.id || 'user1'], count: 1 }
-                            ]
-                          }
-                        : m
-                    ));
+                    addReaction(messageId, emoji);
                   }}
                   onReply={(messageId) => {
                     // Set reply context
@@ -483,7 +509,7 @@ const WhatsAppLayout: React.FC<WhatsAppLayoutProps> = ({ roomId, currentChat }) 
             <div className="border-t border-border bg-card/30 backdrop-blur-sm">
               <MessageInput
                 onSendMessage={handleSendMessage}
-                onTyping={setIsTyping}
+                onTyping={(t) => { setIsTyping(t); if (t) startTyping(); else stopTyping(); }}
                 placeholder="Type a message..."
                 disabled={false}
               />
