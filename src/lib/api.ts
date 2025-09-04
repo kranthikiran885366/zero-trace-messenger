@@ -436,6 +436,26 @@ class APIClient {
     return { messages: response.messages, hasMore: response.hasMore };
   }
 
+  async sendMessageHTTP(roomId: string, content: string, type: string = 'text', metadata: any = {}, selfDestruct: any = {}, replyTo?: string): Promise<{ message: Message }> {
+    const response = await this.request<{ success: boolean; message: Message }>(`/api/messages/${roomId}`, {
+      method: 'POST',
+      body: JSON.stringify({ content, type, metadata, selfDestruct, replyTo })
+    });
+    return { message: response.message };
+  }
+
+  async markMessageReadHTTP(messageId: string): Promise<void> {
+    await this.request(`/api/messages/${messageId}/read`, { method: 'POST' });
+  }
+
+  async addReactionHTTP(messageId: string, reaction: string): Promise<{ reactions: Message['reactions'] }> {
+    const response = await this.request<{ success: boolean; reactions: Message['reactions'] }>(`/api/messages/${messageId}/reactions`, {
+      method: 'POST',
+      body: JSON.stringify({ reaction })
+    });
+    return { reactions: response.reactions };
+  }
+
   // File API
   async uploadFile(
     file: File,
