@@ -250,7 +250,7 @@ const Navigation = () => {
                     Profile Settings
                   </DropdownMenuItem>
                   
-                  <DropdownMenuItem onClick={() => navigate('/app-modes')}>
+                  <DropdownMenuItem onClick={() => navigate('/settings')}>
                     <Settings className="mr-2 h-4 w-4" />
                     App Modes
                   </DropdownMenuItem>
