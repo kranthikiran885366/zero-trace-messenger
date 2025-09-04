@@ -588,7 +588,7 @@ const DarkWebHub = () => {
           {/* Enhanced Hub Tab */}
           <TabsContent value="hub" className="space-y-6">
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card className="bg-gradient-to-br from-red-900/30 to-black/70 border-red-500/40 hover:border-red-400/60 transition-all duration-500 cursor-pointer group relative overflow-hidden">
+              <Card className="bg-gradient-to-br from-red-900/30 to-black/70 border-red-500/40 hover:border-red-400/60 transition-all duration-500 cursor-pointer group relative overflow-hidden" onClick={() => setActiveTab('onion')}>
                 <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
                 <div className="absolute top-2 right-2">
                   <div className="h-3 w-3 bg-red-500 rounded-full animate-pulse" />
@@ -642,7 +642,7 @@ const DarkWebHub = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-purple-900/30 to-black/70 border-purple-500/40 hover:border-purple-400/60 transition-all duration-500 cursor-pointer group relative overflow-hidden">
+              <Card className="bg-gradient-to-br from-purple-900/30 to-black/70 border-purple-500/40 hover:border-purple-400/60 transition-all duration-500 cursor-pointer group relative overflow-hidden" onClick={() => setActiveTab('marketplace')}>
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-violet-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
                 <div className="absolute top-2 right-2">
                   <div className="h-3 w-3 bg-purple-500 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
@@ -683,7 +683,7 @@ const DarkWebHub = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-green-900/30 to-black/70 border-green-500/40 hover:border-green-400/60 transition-all duration-500 cursor-pointer group relative overflow-hidden">
+              <Card className="bg-gradient-to-br from-green-900/30 to-black/70 border-green-500/40 hover:border-green-400/60 transition-all duration-500 cursor-pointer group relative overflow-hidden" onClick={() => setActiveTab('deaddrops')}>
                 <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
                 <div className="absolute top-2 right-2">
                   <div className="h-3 w-3 bg-green-500 rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
