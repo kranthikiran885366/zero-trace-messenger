@@ -40,7 +40,9 @@
     "mime-types": "^2.1.35",
     "sanitize-html": "^2.11.0",
     "xss": "^1.0.14",
-    "validator": "^13.11.0"
+    "validator": "^13.11.0",
+    "redis": "^4.6.13",
+    "kafkajs": "^2.2.4"
   },
   "devDependencies": {
     "nodemon": "^3.0.1",
