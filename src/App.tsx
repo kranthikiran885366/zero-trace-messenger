@@ -22,6 +22,8 @@ import SignIn from '@/pages/SignIn';
 import ForgotPassword from '@/pages/ForgotPassword';
 import RoomManager from '@/pages/RoomManager';
 import DarkWebHub from '@/pages/DarkWebHub';
+import Profile from '@/pages/Profile';
+import GroupSettings from '@/pages/GroupSettings';
 import NotFound from '@/pages/NotFound';
 
 // Loading component
@@ -103,6 +105,18 @@ const AppRoutes: React.FC = () => {
       <Route path="/rooms" element={
         <ProtectedRoute>
           <RoomManager />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/profile" element={
+        <ProtectedRoute>
+          <Profile />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/group/:roomId/manage" element={
+        <ProtectedRoute>
+          <GroupSettings />
         </ProtectedRoute>
       } />
       
