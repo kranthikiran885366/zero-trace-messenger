@@ -31,6 +31,8 @@ export interface UserProfile {
   isAnonymous: boolean;
 }
 
+export const FIREBASE_AVAILABLE = false;
+
 // Temporary implementations - these will be replaced with real Firebase when installed
 export const signUpWithEmail = async (email: string, password: string, displayName: string): Promise<any> => {
   throw new Error('Firebase not installed. Please run: npm install firebase');
