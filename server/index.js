@@ -146,6 +146,28 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Server-Sent Events for live stats
+app.get('/api/events', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders?.();
+
+  const sendStats = () => {
+    const stats = inMemoryDB.getStats();
+    const payload = JSON.stringify({ type: 'stats_update', data: stats, timestamp: new Date().toISOString() });
+    res.write(`data: ${payload}\n\n`);
+  };
+
+  const interval = setInterval(sendStats, 5000);
+  sendStats();
+
+  req.on('close', () => {
+    clearInterval(interval);
+    res.end();
+  });
+});
+
 // Socket.io Connection Handling
 io.use(async (socket, next) => {
   try {
