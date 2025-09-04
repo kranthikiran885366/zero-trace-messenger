@@ -107,6 +107,9 @@ module.exports = (io) => {
           encryptionKey: room.security.encryptionKey,
           encryptionFingerprint: room.security.encryptionFingerprint
         });
+
+        // Publish room join event
+        kafka.publish && kafka.publish('securechat.events', { type: 'room.join', roomId: room.roomId, userId: socket.userId, at: Date.now() });
         
         // Notify other users in room
         socket.to(room.roomId).emit('user_joined', {
@@ -183,7 +186,10 @@ module.exports = (io) => {
         socket.emit('room_left', { roomId });
         
         console.log(`👋 User ${socket.user.nickname} left room ${roomId}`);
-        
+
+        // Publish room leave event
+        kafka.publish && kafka.publish('securechat.events', { type: 'room.leave', roomId, userId: socket.userId, at: Date.now() });
+
       } catch (error) {
         console.error('Leave room error:', error);
         socket.emit('error', {
@@ -280,7 +286,10 @@ module.exports = (io) => {
         // Emit to all users in room
         const safeMessage = message.toSafeObject(socket.userId);
         io.to(roomId).emit('new_message', safeMessage);
-        
+
+        // Publish message event to Kafka for downstream processing/analytics
+        kafka.publish && kafka.publish('securechat.messages', { type: 'message.sent', roomId, message: safeMessage, at: Date.now() });
+
         // Handle message threading
         if (replyTo) {
           const parentMessage = await Message.findOne({ messageId: replyTo });
@@ -576,7 +585,10 @@ module.exports = (io) => {
         socket.user.status = 'offline';
         socket.user.lastActive = new Date();
         await socket.user.save();
-        
+
+        // Presence update
+        redis.srem && redis.srem('presence:online', socket.userId);
+
         // Remove from active connections
         const connection = activeConnections.get(socket.userId);
         if (connection) {
