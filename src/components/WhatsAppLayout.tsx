@@ -217,23 +217,7 @@ const WhatsAppLayout: React.FC<WhatsAppLayoutProps> = ({ roomId, currentChat }) 
 
     setMessages(prev => [...prev, newMessage]);
 
-    // Simulate message sending
-    setTimeout(() => {
-      setMessages(prev => prev.map(m => 
-        m.id === newMessage.id 
-          ? { ...m, isSending: false, isDelivered: true }
-          : m
-      ));
-    }, 1000);
-
-    // Simulate read receipt
-    setTimeout(() => {
-      setMessages(prev => prev.map(m => 
-        m.id === newMessage.id 
-          ? { ...m, isRead: true }
-          : m
-      ));
-    }, 2000);
+    // Optimistic updates are handled by ChatContext in real mode
 
     toast({
       title: "Message Sent",
