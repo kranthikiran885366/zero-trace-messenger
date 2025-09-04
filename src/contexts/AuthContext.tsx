@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { 
+import { api } from '@/lib/api';
+import {
   onAuthStateChange,
   signInWithEmail,
   signUpWithEmail,
@@ -359,23 +360,57 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const createAnonymousSession = async (nickname: string, preferences = {}): Promise<void> => {
     try {
       setIsLoading(true);
-      const anonymousUser = await createAnonymousUser(nickname);
-      const user = createUserFromProfile(null, anonymousUser);
-      setUser(user);
-      
+
+      // Prefer backend anonymous auth to obtain API token for protected endpoints
+      const { user: backendUser, token } = await api.createAnonymousSession(nickname, preferences);
+
+      // Persist auth via API client and set local auth context user
+      const mappedUser: User = {
+        id: backendUser.userId,
+        _id: backendUser._id,
+        userId: backendUser.userId,
+        fingerprint: backendUser.fingerprint,
+        email: `${backendUser.userId}@anonymous.local`,
+        displayName: backendUser.nickname,
+        nickname: backendUser.nickname,
+        photoURL: undefined,
+        preferences: backendUser.preferences,
+        stats: backendUser.stats,
+        status: backendUser.status,
+        createdAt: new Date(backendUser.createdAt),
+        lastActive: new Date(backendUser.lastActive),
+        isAnonymous: true
+      };
+
+      setUser(mappedUser);
+      localStorage.setItem('anonymousSession', 'true');
+      localStorage.setItem('anonymousUser', JSON.stringify(mappedUser));
+
       toast({
         title: "Anonymous Session Created",
         description: `Welcome, ${nickname}! Your session is now active.`,
         variant: "default"
       });
     } catch (error: any) {
-      console.error('Anonymous session error:', error);
-      toast({
-        title: "Session Creation Failed",
-        description: error.message || 'Failed to create anonymous session.',
-        variant: "destructive"
-      });
-      throw error;
+      // Fallback to local anonymous stub if backend is unavailable
+      try {
+        const anonymousUser = await createAnonymousUser(nickname);
+        const user = createUserFromProfile(null, anonymousUser);
+        setUser(user);
+        toast({
+          title: "Anonymous Session Created (Local)",
+          description: `Welcome, ${nickname}!`,
+          variant: "default"
+        });
+      } catch (innerError: any) {
+        console.error('Anonymous session error:', innerError);
+        toast({
+          title: "Session Creation Failed",
+          description: innerError.message || 'Failed to create anonymous session.',
+          variant: "destructive"
+        });
+        throw innerError;
+      }
     } finally {
       setIsLoading(false);
     }
