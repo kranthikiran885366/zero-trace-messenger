@@ -1360,7 +1360,7 @@ const DarkWebHub = () => {
       </div>
 
       {/* Custom Styles */}
-      <style jsx>{`
+      <style>{`
         @keyframes scan {
           0% { transform: translateY(-100vh); }
           100% { transform: translateY(100vh); }
