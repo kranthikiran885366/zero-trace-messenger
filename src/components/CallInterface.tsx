@@ -503,7 +503,7 @@ const CallInterface: React.FC<CallInterfaceProps> = ({
             size="lg"
             className="rounded-full w-14 h-14"
           >
-            {callState.isRecording ? <Square className="h-6 w-6" /> : <Record className="h-6 w-6" />}
+            {callState.isRecording ? <Square className="h-6 w-6" /> : <CircleDot className="h-6 w-6" />}
           </Button>
 
           {/* End Call */}
