@@ -62,38 +62,26 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   
-  // Real-time event handlers
+  // Real-time event handlers (WS). If WS not connected, a polling loop is used below.
   useEffect(() => {
     if (!isAuthenticated || !wsClient.isConnected()) return;
 
-    // Room events
     wsClient.on('room_joined', handleRoomJoined);
     wsClient.on('room_left', handleRoomLeft);
     wsClient.on('user_joined', handleUserJoined);
     wsClient.on('user_left', handleUserLeft);
-    
-    // Message events
     wsClient.on('new_message', handleNewMessage);
     wsClient.on('message_read', handleMessageRead);
     wsClient.on('message_reaction', handleMessageReaction);
     wsClient.on('message_destroyed', handleMessageDestroyed);
     wsClient.on('recent_messages', handleRecentMessages);
-    
-    // Typing events
     wsClient.on('user_typing', handleUserTyping);
-    
-    // File sharing events
     wsClient.on('file_shared_notification', handleFileShared);
-    
-    // Video call events
     wsClient.on('video_call_invite', handleVideoCallInvite);
     wsClient.on('video_call_response', handleVideoCallResponse);
-    
-    // Error handling
     wsClient.on('error', handleWebSocketError);
 
     return () => {
-      // Cleanup event listeners
       wsClient.off('room_joined', handleRoomJoined);
       wsClient.off('room_left', handleRoomLeft);
       wsClient.off('user_joined', handleUserJoined);
@@ -110,6 +98,31 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       wsClient.off('error', handleWebSocketError);
     };
   }, [isAuthenticated]);
+
+  // Polling loop when WS is unavailable
+  useEffect(() => {
+    if (!isAuthenticated || !currentRoom) return;
+    if (wsClient.isConnected()) return;
+
+    let cancelled = false;
+    const interval = setInterval(async () => {
+      if (cancelled || !currentRoom) return;
+      try {
+        const last = messages[messages.length - 1];
+        if (last) {
+          const { messages: newer } = await api.getNewMessages(currentRoom.roomId, new Date(last.createdAt).toISOString(), 50);
+          if (newer && newer.length) {
+            setMessages(prev => [...prev, ...newer].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()));
+          }
+        } else {
+          const { messages: initial } = await api.getRoomMessages(currentRoom.roomId, 50);
+          if (initial && initial.length) setMessages(initial);
+        }
+      } catch {}
+    }, 3000);
+
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [isAuthenticated, currentRoom, messages, wsClient.isConnected()]);
 
   // Event Handlers
   const handleRoomJoined = (data: { room: Room; encryptionKey: string; encryptionFingerprint: string }) => {
