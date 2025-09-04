@@ -430,10 +430,10 @@ const WhatsAppLayout: React.FC<WhatsAppLayoutProps> = ({ roomId, currentChat }) 
                     </p>
                   </div>
                   
-                  {selectedChat.isGroup && (
+                  {(selectedChat.isGroup || (currentRoom?.activeUsers?.length || 0) > 1) && (
                     <Badge variant="secondary" className="ml-2">
                       <Users className="h-3 w-3 mr-1" />
-                      {selectedChat.participantsCount || 2}
+                      {currentRoom?.activeUsers?.length || selectedChat.participantsCount || 2}
                     </Badge>
                   )}
                 </div>
