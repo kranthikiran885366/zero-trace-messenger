@@ -61,7 +61,7 @@ app.post('/api/auth/anonymous', (req, res) => {
     res.json({
       success: true,
       user: anonymousUser,
-      sessionToken: sessionToken,
+      token: sessionToken,
       expiresIn: 3600000,
       timestamp: new Date().toISOString()
     });
