@@ -436,6 +436,14 @@ class APIClient {
     return { messages: response.messages, hasMore: response.hasMore };
   }
 
+  async getNewMessages(roomId: string, afterISO: string, limit = 50): Promise<{ messages: Message[] }> {
+    const params = new URLSearchParams();
+    params.append('limit', limit.toString());
+    params.append('after', afterISO);
+    const response = await this.request<{ success: boolean; messages: Message[] }>(`/api/rooms/${roomId}/messages?${params}`);
+    return { messages: response.messages };
+  }
+
   async sendMessageHTTP(roomId: string, content: string, type: string = 'text', metadata: any = {}, selfDestruct: any = {}, replyTo?: string): Promise<{ message: Message }> {
     const response = await this.request<{ success: boolean; message: Message }>(`/api/messages/${roomId}`, {
       method: 'POST',
