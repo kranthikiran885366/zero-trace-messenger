@@ -290,44 +290,49 @@ router.put('/:roomId/settings', verifyToken, async (req, res) => {
 router.get('/:roomId/messages', verifyToken, async (req, res) => {
   try {
     const { roomId } = req.params;
-    const { limit = 50, before } = req.query;
-    
+    const { limit = 50, before, after } = req.query;
+
     // Check if user is in room
     const room = await Room.findOne({ roomId });
     if (!room) {
-      return res.status(404).json({
-        error: 'Room not found'
-      });
+      return res.status(404).json({ error: 'Room not found' });
     }
-    
+
     const userInRoom = room.activeUsers.find(u => u.userId === req.user.userId);
     if (!userInRoom) {
-      return res.status(403).json({
-        error: 'Access denied',
-        message: 'You must be in the room to view messages'
-      });
+      return res.status(403).json({ error: 'Access denied', message: 'You must be in the room to view messages' });
     }
-    
-    // Get messages
-    const messages = await Message.findByRoom(roomId, parseInt(limit), before);
-    
-    // Filter out destroyed messages and return safe objects
+
+    const parsedLimit = parseInt(limit);
+    let messages;
+
+    if (after) {
+      // Fetch newer messages after a timestamp
+      messages = await Message.find({
+        roomId,
+        'selfDestruct.isDestroyed': { $ne: true },
+        createdAt: { $gt: new Date(after) }
+      })
+      .sort({ createdAt: 1 })
+      .limit(parsedLimit);
+    } else {
+      // Older messages before timestamp (or latest)
+      messages = await Message.findByRoom(roomId, parsedLimit, before);
+    }
+
     const safeMessages = messages
       .filter(msg => !msg.selfDestruct?.isDestroyed)
       .map(msg => msg.toSafeObject(req.user.userId));
-    
+
     res.json({
       success: true,
       messages: safeMessages,
-      hasMore: messages.length === parseInt(limit)
+      hasMore: !after && messages.length === parsedLimit
     });
-    
+
   } catch (error) {
     console.error('Get messages error:', error);
-    res.status(500).json({
-      error: 'Failed to get messages',
-      message: 'Internal server error'
-    });
+    res.status(500).json({ error: 'Failed to get messages', message: 'Internal server error' });
   }
 });
 
