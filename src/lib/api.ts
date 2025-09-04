@@ -431,7 +431,7 @@ class APIClient {
       success: boolean;
       messages: Message[];
       hasMore: boolean;
-    }>(`/api/messages/${roomId}?${params}`);
+    }>(`/api/rooms/${roomId}/messages?${params}`);
 
     return { messages: response.messages, hasMore: response.hasMore };
   }
