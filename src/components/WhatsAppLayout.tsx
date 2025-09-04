@@ -29,6 +29,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useChat } from '@/contexts/ChatContext';
 import ChatList from './ChatList';
 import MessageBubble, { type Message } from './MessageBubble';
 import { MessageInput } from './MessageInput';
