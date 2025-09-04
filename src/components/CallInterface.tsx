@@ -166,13 +166,10 @@ const CallInterface: React.FC<CallInterfaceProps> = ({
   };
 
   const handleSendChatMessage = () => {
-    if (chatMessage.trim() && onSendMessage) {
-      onSendMessage(chatMessage);
+    if (chatMessage.trim()) {
+      onSendMessage?.(chatMessage);
       setChatMessage('');
-      toast({
-        title: "Message Sent",
-        description: "Your message has been sent to all participants.",
-      });
+      toast({ title: 'Message Sent', description: 'Your message has been sent to all participants.' });
     }
   };
 
