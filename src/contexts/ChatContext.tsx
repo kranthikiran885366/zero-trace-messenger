@@ -382,12 +382,13 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
   const sendMessage = async (content: string, type = 'text', metadata = {}) => {
     if (!currentRoom || !content.trim()) return;
-    
+
     try {
-      // Create optimistic message
+      // Optimistic update
+      const tempId = `temp_${Date.now()}`;
       const optimisticMessage: Message = {
-        _id: `temp_${Date.now()}`,
-        messageId: `temp_${Date.now()}`,
+        _id: tempId,
+        messageId: tempId,
         roomId: currentRoom.roomId,
         senderId: user?.userId || '',
         senderNickname: user?.nickname || '',
@@ -399,19 +400,16 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         metadata,
         createdAt: new Date()
       };
-      
       setMessages(prev => [...prev, optimisticMessage]);
-      
-      // Send via WebSocket
-      wsClient.emit('send_message', {
-        roomId: currentRoom.roomId,
-        content,
-        type,
-        metadata
-      });
-      
+
+      if (wsClient.isConnected()) {
+        wsClient.emit('send_message', { roomId: currentRoom.roomId, content, type, metadata });
+      } else {
+        const { message } = await api.sendMessageHTTP(currentRoom.roomId, content, type, metadata);
+        setMessages(prev => prev.map(m => (m.messageId === tempId ? message : m)));
+      }
     } catch (error) {
-      handleAPIError(error as Error, "Failed to send message");
+      handleAPIError(error as Error, 'Failed to send message');
     }
   };
 
@@ -449,7 +447,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
   const markMessageAsRead = async (messageId: string) => {
     try {
-      wsClient.emit('mark_message_read', { messageId });
+      if (wsClient.isConnected()) {
+        wsClient.emit('mark_message_read', { messageId });
+      } else {
+        await api.markMessageReadHTTP(messageId);
+      }
     } catch (error) {
       console.error('Failed to mark message as read:', error);
     }
@@ -457,9 +459,14 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
   const addReaction = async (messageId: string, reaction: string) => {
     try {
-      wsClient.emit('add_reaction', { messageId, reaction });
+      if (wsClient.isConnected()) {
+        wsClient.emit('add_reaction', { messageId, reaction });
+      } else {
+        const { reactions } = await api.addReactionHTTP(messageId, reaction);
+        setMessages(prev => prev.map(msg => (msg.messageId === messageId ? { ...msg, reactions } : msg)));
+      }
     } catch (error) {
-      handleAPIError(error as Error, "Failed to add reaction");
+      handleAPIError(error as Error, 'Failed to add reaction');
     }
   };
 
