@@ -13,7 +13,7 @@ import {
   Settings,
   Users,
   MessageSquare,
-  Grid3x3,
+  LayoutGrid,
   Maximize2,
   Minimize2,
   Camera,
@@ -339,7 +339,7 @@ const CallInterface: React.FC<CallInterfaceProps> = ({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm">
-                  <Grid3x3 className="h-4 w-4" />
+                  <LayoutGrid className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
