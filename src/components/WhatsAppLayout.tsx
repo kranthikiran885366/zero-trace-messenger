@@ -56,6 +56,7 @@ const WhatsAppLayout: React.FC<WhatsAppLayoutProps> = ({ roomId, currentChat }) 
   
   // State management
   const [selectedChatId, setSelectedChatId] = useState<string | null>(roomId || null);
+  const { currentRoom, messages: roomMessages, typingUsers, onlineUsers, sendMessage: sendChatMessage, sendFile: sendChatFile, addReaction, startTyping, stopTyping } = useChat();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
