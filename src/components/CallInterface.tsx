@@ -318,7 +318,7 @@ const CallInterface: React.FC<CallInterfaceProps> = ({
                 <span>{formatDuration(callState.duration)}</span>
                 {callState.isRecording && (
                   <Badge variant="destructive" className="text-xs">
-                    <Record className="h-3 w-3 mr-1" />
+                    <CircleDot className="h-3 w-3 mr-1" />
                     REC
                   </Badge>
                 )}
