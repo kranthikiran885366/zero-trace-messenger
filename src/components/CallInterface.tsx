@@ -136,36 +136,33 @@ const CallInterface: React.FC<CallInterfaceProps> = ({
   };
 
   const handleToggleVideo = () => {
-    const newState = !isVideoEnabled;
-    setIsVideoEnabled(newState);
-    onToggleVideo(newState);
-    
-    toast({
-      title: newState ? "Camera On" : "Camera Off",
-      description: newState ? "Your video is now visible" : "Your video is now hidden",
-    });
+    const enabled = webrtcService.toggleVideo();
+    setIsVideoEnabled(enabled);
+    onToggleVideo(enabled);
+    toast({ title: enabled ? 'Camera On' : 'Camera Off', description: enabled ? 'Your video is now visible' : 'Your video is now hidden' });
   };
 
   const handleToggleAudio = () => {
-    const newState = !isAudioEnabled;
-    setIsAudioEnabled(newState);
-    onToggleAudio(newState);
-    
-    toast({
-      title: newState ? "Microphone On" : "Microphone Off",
-      description: newState ? "You can now speak" : "You are now muted",
-    });
+    const enabled = webrtcService.toggleAudio();
+    setIsAudioEnabled(enabled);
+    onToggleAudio(enabled);
+    toast({ title: enabled ? 'Microphone On' : 'Microphone Off', description: enabled ? 'You can now speak' : 'You are now muted' });
   };
 
-  const handleToggleScreenShare = () => {
-    const newState = !isScreenSharing;
-    setIsScreenSharing(newState);
-    onToggleScreenShare(newState);
-    
-    toast({
-      title: newState ? "Screen Sharing Started" : "Screen Sharing Stopped",
-      description: newState ? "Your screen is now visible to all participants" : "Screen sharing has been stopped",
-    });
+  const handleToggleScreenShare = async () => {
+    const enable = !isScreenSharing;
+    try {
+      if (enable) {
+        await webrtcService.startScreenShare();
+      } else {
+        await webrtcService.stopScreenShare();
+      }
+      setIsScreenSharing(enable);
+      onToggleScreenShare(enable);
+      toast({ title: enable ? 'Screen Sharing Started' : 'Screen Sharing Stopped', description: enable ? 'Your screen is now visible to all participants' : 'Screen sharing has been stopped' });
+    } catch (e) {
+      toast({ title: 'Screen Share Error', description: 'Permission denied or not supported', variant: 'destructive' });
+    }
   };
 
   const handleSendChatMessage = () => {
