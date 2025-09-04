@@ -19,7 +19,7 @@ import {
   Camera,
   CameraOff,
   MoreVertical,
-  Record,
+  CircleDot,
   Square,
   UserPlus,
   Expand,
