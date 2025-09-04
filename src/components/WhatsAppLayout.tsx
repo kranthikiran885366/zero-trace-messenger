@@ -31,7 +31,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import ChatList from './ChatList';
 import MessageBubble, { type Message } from './MessageBubble';
-import MessageInput from './MessageInput';
+import { MessageInput } from './MessageInput';
 import StatusList from './StatusList';
 import { cn } from '@/lib/utils';
 
