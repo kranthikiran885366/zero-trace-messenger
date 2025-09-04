@@ -311,11 +311,31 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   const joinRoom = async (roomCode: string, password?: string) => {
     try {
       setIsLoading(true);
-      const { room, encryptionKey, encryptionFingerprint } = await api.joinRoom(roomCode, password);
-      
-      // Emit join room event to WebSocket
+      const { room, encryptionKey } = await api.joinRoom(roomCode, password);
+
+      // Set local state immediately so UI updates even without WS events
+      setCurrentRoom(room);
+      setIsConnected(true);
+      setTypingUsers([]);
+
+      try {
+        const { messages: recentMessages } = await api.getRoomMessages(room.roomId, 50);
+        setMessages(recentMessages);
+      } catch (e) {
+        // Non-fatal if messages fail to load
+        console.warn('Failed to load recent messages:', e);
+      }
+
+      // Persist encryption key for this room
+      localStorage.setItem(`room_${room.roomId}_key`, encryptionKey);
+
+      // Try to notify backend via WebSocket (best-effort)
       wsClient.emit('join_room', { roomId: room.roomId, roomCode });
-      
+
+      toast({
+        title: 'Joined Room',
+        description: `Welcome to ${room.name}`,
+      });
     } catch (error) {
       handleAPIError(error as Error, "Failed to join room");
       throw error;
@@ -326,11 +346,18 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
   const leaveRoom = async () => {
     if (!currentRoom) return;
-    
+
     try {
       await api.leaveRoom(currentRoom.roomId);
       wsClient.emit('leave_room', { roomId: currentRoom.roomId });
-      
+
+      // Clear local room state
+      localStorage.removeItem(`room_${currentRoom.roomId}_key`);
+      setCurrentRoom(null);
+      setMessages([]);
+      setTypingUsers([]);
+      setOnlineUsers([]);
+      setIsConnected(false);
     } catch (error) {
       handleAPIError(error as Error, "Failed to leave room");
     }
