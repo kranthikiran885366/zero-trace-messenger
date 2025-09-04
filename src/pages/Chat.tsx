@@ -1,11 +1,23 @@
-import React from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useLocation, useParams } from 'react-router-dom';
 import WhatsAppLayout from '@/components/WhatsAppLayout';
+import { useChat } from '@/contexts/ChatContext';
 
 const Chat = () => {
   const { roomId } = useParams();
+  const location = useLocation();
+  const { currentRoom, joinRoom } = useChat();
 
-  // Get current chat info (in a real app, this would come from API/context)
+  useEffect(() => {
+    const state = location.state as { roomCode?: string } | null;
+    const roomCode = state?.roomCode;
+    if (!roomId) return;
+    if (currentRoom?.roomId === roomId) return;
+    if (roomCode) {
+      joinRoom(roomCode).catch(() => {});
+    }
+  }, [roomId]);
+
   const currentChat = roomId ? {
     id: roomId,
     name: `Secure Room ${roomId.slice(-8)}`,
