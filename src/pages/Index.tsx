@@ -308,16 +308,16 @@ const Index = () => {
         return;
       }
 
-      // Join the room
+      // Join the room (validates access and prepares encryption)
       await api.joinRoom(code, password);
-      
+
       toast({
         title: "Joining Room",
         description: "Connecting to secure chat session...",
       });
-      
-      // Navigate to chat
-      navigate(`/chat/${roomInfo.room.roomId}`);
+
+      // Navigate to chat and pass roomCode so Chat page can rehydrate/join context
+      navigate(`/chat/${roomInfo.room.roomId}`, { state: { roomCode: code } });
       
     } catch (error: any) {
       if (error.message.includes('Password required')) {
