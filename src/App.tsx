@@ -24,6 +24,7 @@ import RoomManager from '@/pages/RoomManager';
 import DarkWebHub from '@/pages/DarkWebHub';
 import Profile from '@/pages/Profile';
 import GroupSettings from '@/pages/GroupSettings';
+import SettingsPage from '@/pages/Settings';
 import NotFound from '@/pages/NotFound';
 
 // Loading component
@@ -117,6 +118,12 @@ const AppRoutes: React.FC = () => {
       <Route path="/group/:roomId/manage" element={
         <ProtectedRoute>
           <GroupSettings />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/settings" element={
+        <ProtectedRoute>
+          <SettingsPage />
         </ProtectedRoute>
       } />
       
