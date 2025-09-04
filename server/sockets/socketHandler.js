@@ -7,10 +7,13 @@ const crypto = require('crypto');
 const activeConnections = new Map();
 const roomConnections = new Map();
 
+const kafka = require('../services/kafka');
+const redis = require('../services/redis');
+
 module.exports = (io) => {
   io.on('connection', (socket) => {
     console.log(`🔗 User ${socket.user.nickname} connected (${socket.userId})`);
-    
+
     // Store connection
     activeConnections.set(socket.userId, {
       socket,
@@ -18,6 +21,12 @@ module.exports = (io) => {
       joinedRooms: new Set(),
       lastActivity: new Date()
     });
+
+    // Presence in Redis
+    redis.sadd && redis.sadd('presence:online', socket.userId);
+
+    // Publish connect event
+    kafka.publish && kafka.publish('securechat.events', { type: 'user.connected', userId: socket.userId, at: Date.now() });
     
     // Update user status
     socket.user.status = 'online';
