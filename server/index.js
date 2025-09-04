@@ -30,6 +30,17 @@ const { errorHandler } = require('./middleware/errorHandler');
 const app = express();
 const server = http.createServer(app);
 
+// Config and services
+const config = require('./config/env');
+const redisService = require('./services/redis');
+const kafkaService = require('./services/kafka');
+
+// Initialize optional external services
+(async () => {
+  await redisService.init();
+  await kafkaService.init();
+})();
+
 // Socket.io setup with CORS
 const io = socketIo(server, {
   cors: {
