@@ -153,6 +153,8 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    redis: redisService.isReady ? redisService.isReady() : false,
+    kafka: kafkaService.ready ? kafkaService.ready() : false,
     environment: process.env.NODE_ENV || 'development'
   });
 });
