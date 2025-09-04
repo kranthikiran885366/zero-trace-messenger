@@ -67,11 +67,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Check if Firebase is available
   useEffect(() => {
     try {
-      // Try to check if Firebase is properly installed
-      const firebaseAvailable = typeof onAuthStateChange === 'function';
-      setIsFirebaseAvailable(firebaseAvailable);
-      
-      if (!firebaseAvailable) {
+      // Use explicit flag exported by firebase stub/implementation
+      const flag = ((): boolean => {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          return (require('@/lib/firebase') as any).FIREBASE_AVAILABLE === true;
+        } catch {
+          return false;
+        }
+      })();
+      setIsFirebaseAvailable(flag);
+      if (!flag) {
         console.warn('Firebase not available, only anonymous authentication supported');
       }
     } catch (error) {
