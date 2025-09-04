@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import CallInterface, { type CallState, type CallParticipant } from '@/components/CallInterface';
+import { webrtcService } from '@/lib/webrtc';
 
 const VideoCall = () => {
   const { roomId } = useParams();
@@ -24,199 +25,140 @@ const VideoCall = () => {
     isPaused: false
   });
 
-  // Initialize call
   useEffect(() => {
-    const initializeCall = async () => {
+    let unsubUsers: (() => void) | null = null;
+    let unsubConn: (() => void) | null = null;
+
+    const init = async () => {
       try {
-        // Simulate initializing call participants
-        const participants: CallParticipant[] = [
-          {
-            id: user?.id || 'current-user',
-            name: user?.nickname || 'You',
-            avatar: user?.avatar,
-            isVideoEnabled: !isAudioOnly,
-            isAudioEnabled: true,
-            isScreenSharing: false,
-            connectionQuality: 'excellent',
-            isLocal: true
-          }
-        ];
+        await webrtcService.initializeMedia({ video: !isAudioOnly, audio: true });
+        const uid = user?.id || user?.userId || 'user-' + Math.random().toString(36).slice(2, 8);
+        await webrtcService.join(roomId || callState.id, uid);
 
-        // Add other participants (simulated)
-        if (roomId) {
-          participants.push({
-            id: 'remote-user-1',
-            name: `User ${roomId.slice(-4)}`,
-            isVideoEnabled: !isAudioOnly,
-            isAudioEnabled: true,
-            isScreenSharing: false,
-            connectionQuality: 'good',
-            isLocal: false
-          });
-        }
-
-        setCallState(prev => ({
-          ...prev,
-          status: 'ringing',
-          participants,
-          isGroupCall: participants.length > 2
-        }));
-
-        // Simulate connection delay
-        setTimeout(() => {
-          setCallState(prev => ({
-            ...prev,
-            status: 'connected',
-            startTime: new Date()
+        unsubUsers = webrtcService.onUsers((users) => {
+          const participants: CallParticipant[] = users.map((u) => ({
+            id: u.id,
+            name: u.id === uid ? (user?.nickname || 'You') : `User ${u.id.slice(-4)}`,
+            avatar: u.id === uid ? user?.avatar : undefined,
+            isVideoEnabled: !!u.mediaSettings.video,
+            isAudioEnabled: !!u.mediaSettings.audio,
+            isScreenSharing: !!u.mediaSettings.screenShare,
+            connectionQuality: u.quality,
+            isLocal: u.id === uid,
           }));
 
-          toast({
-            title: "Call Connected",
-            description: `${isAudioOnly ? 'Audio' : 'Video'} call established successfully.`,
-          });
-        }, 2000);
-
-      } catch (error) {
-        setCallState(prev => ({
-          ...prev,
-          status: 'failed'
-        }));
-
-        toast({
-          title: "Call Failed",
-          description: "Unable to establish connection. Please try again.",
-          variant: "destructive"
+          setCallState((prev) => ({
+            ...prev,
+            participants,
+            isGroupCall: participants.length > 2,
+          }));
         });
+
+        unsubConn = webrtcService.onConnection((connected) => {
+          if (connected) {
+            setCallState((prev) => ({ ...prev, status: 'connected', startTime: new Date() }));
+            toast({ title: 'Call Connected', description: `${isAudioOnly ? 'Audio' : 'Video'} call established.` });
+          } else {
+            setCallState((prev) => ({ ...prev, status: 'ended' }));
+          }
+        });
+      } catch (e) {
+        setCallState((prev) => ({ ...prev, status: 'failed' }));
+        toast({ title: 'Call Failed', description: 'Unable to access camera/microphone', variant: 'destructive' });
       }
     };
 
-    initializeCall();
+    init();
+
+    return () => {
+      unsubUsers?.();
+      unsubConn?.();
+      webrtcService.leave();
+    };
   }, [roomId, isAudioOnly, user, toast]);
 
-  // Call duration timer
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    
     if (callState.status === 'connected' && callState.startTime) {
       interval = setInterval(() => {
         const now = new Date();
         const duration = Math.floor((now.getTime() - callState.startTime!.getTime()) / 1000);
-        setCallState(prev => ({ ...prev, duration }));
+        setCallState((prev) => ({ ...prev, duration }));
       }, 1000);
     }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
+    return () => interval && clearInterval(interval);
   }, [callState.status, callState.startTime]);
 
   const handleEndCall = () => {
-    setCallState(prev => ({ ...prev, status: 'ended' }));
-    
+    webrtcService.leave();
+    setCallState((prev) => ({ ...prev, status: 'ended' }));
     toast({
-      title: "Call Ended",
-      description: `Call duration: ${Math.floor(callState.duration / 60)}:${(callState.duration % 60).toString().padStart(2, '0')}`,
+      title: 'Call Ended',
+      description: `Call duration: ${Math.floor(callState.duration / 60)}:${(callState.duration % 60)
+        .toString()
+        .padStart(2, '0')}`,
     });
-
-    // Navigate back after a brief delay
-    setTimeout(() => {
-      navigate(-1);
-    }, 1000);
+    setTimeout(() => navigate(-1), 1000);
   };
 
   const handleToggleVideo = (enabled: boolean) => {
-    setCallState(prev => ({
+    const state = webrtcService.toggleVideo();
+    const effective = typeof enabled === 'boolean' ? enabled : state;
+    setCallState((prev) => ({
       ...prev,
-      participants: prev.participants.map(p =>
-        p.isLocal ? { ...p, isVideoEnabled: enabled } : p
-      )
+      type: !effective ? 'audio' : 'video',
+      participants: prev.participants.map((p) => (p.isLocal ? { ...p, isVideoEnabled: effective } : p)),
     }));
-
-    // Update call type if video is disabled
-    if (!enabled && callState.type === 'video') {
-      setCallState(prev => ({ ...prev, type: 'audio' }));
-    } else if (enabled && callState.type === 'audio') {
-      setCallState(prev => ({ ...prev, type: 'video' }));
-    }
   };
 
   const handleToggleAudio = (enabled: boolean) => {
-    setCallState(prev => ({
+    const state = webrtcService.toggleAudio();
+    const effective = typeof enabled === 'boolean' ? enabled : state;
+    setCallState((prev) => ({
       ...prev,
-      participants: prev.participants.map(p =>
-        p.isLocal ? { ...p, isAudioEnabled: enabled } : p
-      )
+      participants: prev.participants.map((p) => (p.isLocal ? { ...p, isAudioEnabled: effective } : p)),
     }));
   };
 
-  const handleToggleScreenShare = (enabled: boolean) => {
-    setCallState(prev => ({
-      ...prev,
-      participants: prev.participants.map(p =>
-        p.isLocal ? { ...p, isScreenSharing: enabled } : p
-      )
-    }));
-
-    if (enabled) {
-      toast({
-        title: "Screen Sharing Started",
-        description: "Your screen is now visible to all participants.",
-      });
+  const handleToggleScreenShare = async (enabled: boolean) => {
+    try {
+      if (enabled) {
+        await webrtcService.startScreenShare();
+      } else {
+        await webrtcService.stopScreenShare();
+      }
+      setCallState((prev) => ({
+        ...prev,
+        participants: prev.participants.map((p) => (p.isLocal ? { ...p, isScreenSharing: enabled } : p)),
+      }));
+      if (enabled) {
+        toast({ title: 'Screen Sharing Started', description: 'Your screen is now visible to all participants.' });
+      }
+    } catch (e) {
+      toast({ title: 'Screen Share Failed', description: 'Permission denied or not supported', variant: 'destructive' });
     }
   };
 
   const handleInviteParticipant = (userId: string) => {
-    // In a real implementation, this would send an invitation
-    const newParticipant: CallParticipant = {
-      id: `invited-${Date.now()}`,
-      name: userId,
-      isVideoEnabled: callState.type === 'video',
-      isAudioEnabled: true,
-      isScreenSharing: false,
-      connectionQuality: 'good',
-      isLocal: false
-    };
-
-    setCallState(prev => ({
-      ...prev,
-      participants: [...prev.participants, newParticipant],
-      isGroupCall: prev.participants.length + 1 > 2
-    }));
-
-    toast({
-      title: "Invitation Sent",
-      description: `Invitation sent to ${userId}.`,
-    });
+    toast({ title: 'Invite', description: `Share this link to invite: ${window.location.origin}/video/${roomId}` });
   };
 
   const handleToggleRecording = (enabled: boolean) => {
-    setCallState(prev => ({ ...prev, isRecording: enabled }));
-
-    toast({
-      title: enabled ? "Recording Started" : "Recording Stopped",
-      description: enabled 
-        ? "This call is now being recorded. All participants have been notified."
-        : "Call recording has been stopped.",
-      variant: enabled ? "default" : "destructive"
-    });
+    setCallState((prev) => ({ ...prev, isRecording: enabled }));
+    toast({ title: enabled ? 'Recording Started' : 'Recording Stopped' });
   };
 
   const handleSendMessage = (message: string) => {
-    // In a real implementation, this would send the message through WebRTC data channel
-    console.log('Sending chat message:', message);
+    webrtcService.sendMessage(message);
   };
 
-  // Handle failed call
   if (callState.status === 'failed') {
     return (
       <div className="h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <h2 className="text-2xl font-bold text-destructive">Call Failed</h2>
           <p className="text-muted-foreground">Unable to establish connection</p>
-          <button
-            onClick={() => navigate(-1)}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
-          >
+          <button onClick={() => navigate(-1)} className="px-4 py-2 bg-primary text-primary-foreground rounded-md">
             Go Back
           </button>
         </div>
@@ -224,7 +166,6 @@ const VideoCall = () => {
     );
   }
 
-  // Handle ended call
   if (callState.status === 'ended') {
     return (
       <div className="h-screen flex items-center justify-center bg-background">
@@ -242,7 +183,7 @@ const VideoCall = () => {
   return (
     <CallInterface
       callState={callState}
-      currentUserId={user?.id || 'current-user'}
+      currentUserId={user?.id || user?.userId || 'current-user'}
       onEndCall={handleEndCall}
       onToggleVideo={handleToggleVideo}
       onToggleAudio={handleToggleAudio}
