@@ -114,24 +114,20 @@ const CallInterface: React.FC<CallInterfaceProps> = ({
   const otherParticipants = callState.participants.filter(p => p.id !== currentUserId);
 
   useEffect(() => {
-    // Simulate getting user media
-    if (isVideoEnabled && localVideoRef.current) {
-      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-        .then(stream => {
-          if (localVideoRef.current) {
-            localVideoRef.current.srcObject = stream;
-          }
-        })
-        .catch(error => {
-          console.error('Error accessing media devices:', error);
-          toast({
-            title: "Camera Access Failed",
-            description: "Unable to access camera. Please check permissions.",
-            variant: "destructive"
-          });
-        });
+    const local = webrtcService.getLocalStream();
+    if (local && localVideoRef.current) {
+      localVideoRef.current.srcObject = local;
     }
-  }, [isVideoEnabled, toast]);
+    const off = webrtcService.onStream((userId, stream) => {
+      const el = remoteVideoRefs.current[userId];
+      if (el) {
+        el.srcObject = stream;
+      }
+    });
+    return () => {
+      off();
+    };
+  }, []);
 
   const formatDuration = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
