@@ -96,8 +96,8 @@ const STATUS_BACKGROUNDS = [
 
 export const StatusList: React.FC<StatusListProps> = ({
   currentUser,
-  userStatus,
-  contacts,
+  userStatus = [],
+  contacts = [],
   onCreateStatus,
   onViewStatus,
   onDeleteStatus,
