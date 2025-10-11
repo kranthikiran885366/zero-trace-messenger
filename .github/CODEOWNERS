@@ -1,0 +1,10 @@
+# Code owners for this repository
+# Changes to protected paths require review by the owner (with branch protection)
+* @kranthikiran885366
+
+# Protected paths (explicit for clarity)
+/README.md   @kranthikiran885366
+/LICENSE     @kranthikiran885366
+/CODE_OF_CONDUCT.md @kranthikiran885366
+/CONTRIBUTING.md @kranthikiran885366
+/.github/    @kranthikiran885366

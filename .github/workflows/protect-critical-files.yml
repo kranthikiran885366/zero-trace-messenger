@@ -1,0 +1,28 @@
+name: Protect Critical Files
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Block edits to protected files by non-owner
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          git diff --name-only "$BASE" "$HEAD" > changed_files.txt
+          echo "Changed files:" && cat changed_files.txt
+          PROTECTED_REGEX='^(README.md|LICENSE|CODE_OF_CONDUCT.md|CONTRIBUTING.md|SECURITY.md|\.github/.*)$'
+          if grep -E "$PROTECTED_REGEX" changed_files.txt; then
+            if [ "$ACTOR" != "kranthikiran885366" ]; then
+              echo "::error::Protected files modified by non-owner ($ACTOR). Owner approval required."
+              exit 1
+            fi
+          fi

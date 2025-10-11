@@ -114,7 +114,7 @@ Hide messages within media files:
 
 ### **Encryption Standards**
 ```
-📊 Encryption Strength:
+��� Encryption Strength:
 ├── Symmetric: AES-256-GCM
 ├── Asymmetric: RSA-4096
 ├── Key Exchange: ECDH P-384
@@ -379,6 +379,13 @@ Connect your own domain:
 3. Follow DNS configuration steps
 
 Read more: [Custom Domain Setup](https://docs.lovable.dev/tips-tricks/custom-domain)
+
+## 📜 Governance & Contribution
+
+- License: [MIT](./LICENSE)
+- Code of Conduct: [Contributor Covenant](./CODE_OF_CONDUCT.md)
+- Contributing Guide: [CONTRIBUTING.md](./CONTRIBUTING.md)
+- Security Policy: [SECURITY.md](./.github/SECURITY.md)
 
 ## ⚠️ Legal & Compliance
 
