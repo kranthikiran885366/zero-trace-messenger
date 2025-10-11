@@ -110,6 +110,10 @@ Hide messages within media files:
 - **Motion Vector Manipulation**: Hide in compression data
 - **Temporal Domain**: Time-based data embedding
 
+## 🎥 Demo Video
+
+- Auto-generated via GitHub Action PR: [public/demos/securechat-demo.mp4](./public/demos/securechat-demo.mp4)
+
 ## 🛡️ Security Architecture
 
 ### **Encryption Standards**
