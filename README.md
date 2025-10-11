@@ -1,5 +1,35 @@
 # SecureChat Pro - Anonymous Encrypted Communication Platform
 
+[Live Demo](https://7f9f07ec90e14c4eb9786c1a581ba4c2-d013ba103e97449584c25fa43.fly.dev/)
+
+## 📸 Screenshots
+
+> These images are generated live from the deployed app and reflect the current UI.
+
+- Home
+
+![Home](https://s.wordpress.com/mshots/v1/https%3A%2F%2F7f9f07ec90e14c4eb9786c1a581ba4c2-d013ba103e97449584c25fa43.fly.dev%2F?w=1280)
+
+- Features
+
+![Features](https://s.wordpress.com/mshots/v1/https%3A%2F%2F7f9f07ec90e14c4eb9786c1a581ba4c2-d013ba103e97449584c25fa43.fly.dev%2Ffeatures?w=1280)
+
+- How It Works
+
+![How It Works](https://s.wordpress.com/mshots/v1/https%3A%2F%2F7f9f07ec90e14c4eb9786c1a581ba4c2-d013ba103e97449584c25fa43.fly.dev%2Fhow-it-works?w=1280)
+
+- FAQ
+
+![FAQ](https://s.wordpress.com/mshots/v1/https%3A%2F%2F7f9f07ec90e14c4eb9786c1a581ba4c2-d013ba103e97449584c25fa43.fly.dev%2Ffaq?w=1280)
+
+- Join Room
+
+![Join Room](https://s.wordpress.com/mshots/v1/https%3A%2F%2F7f9f07ec90e14c4eb9786c1a581ba4c2-d013ba103e97449584c25fa43.fly.dev%2Fjoin?w=1280)
+
+- Contact
+
+![Contact](https://s.wordpress.com/mshots/v1/https%3A%2F%2F7f9f07ec90e14c4eb9786c1a581ba4c2-d013ba103e97449584c25fa43.fly.dev%2Fcontact?w=1280)
+
 A comprehensive secure chat application with advanced privacy features, end-to-end encryption, and underground networking capabilities.
 
 ## 🔒 Core Features
