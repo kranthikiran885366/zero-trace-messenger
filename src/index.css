@@ -8,44 +8,36 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Dark cyberpunk base */
-    --background: 222 18% 8%;
-    --foreground: 200 20% 90%;
+    /* Quiet editorial light theme */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
 
-    /* Dark card surfaces with subtle highlights */
-    --card: 220 15% 12%;
-    --card-foreground: 200 15% 85%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
 
-    /* Popover surfaces */
-    --popover: 220 20% 10%;
-    --popover-foreground: 200 15% 90%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
 
-    /* Electric cyan primary */
-    --primary: 190 90% 60%;
-    --primary-foreground: 220 20% 8%;
-    --primary-glow: 190 100% 70%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 199 89% 48%;
 
-    /* Dark secondary surfaces */
-    --secondary: 220 15% 18%;
-    --secondary-foreground: 200 15% 85%;
+    --secondary: 214 32% 94%;
+    --secondary-foreground: 222 47% 18%;
 
-    /* Muted backgrounds */
-    --muted: 220 12% 15%;
-    --muted-foreground: 200 10% 65%;
+    --muted: 214 32% 96%;
+    --muted-foreground: 215 16% 47%;
 
-    /* Purple accent colors */
-    --accent: 280 80% 65%;
-    --accent-foreground: 220 20% 8%;
-    --accent-glow: 280 100% 75%;
+    --accent: 262 83% 58%;
+    --accent-foreground: 0 0% 100%;
+    --accent-glow: 280 81% 60%;
 
-    /* Danger/warning colors */
-    --destructive: 0 85% 60%;
-    --destructive-foreground: 220 20% 8%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
 
-    /* Borders and inputs */
-    --border: 220 15% 22%;
-    --input: 220 15% 16%;
-    --ring: 190 90% 60%;
+    --border: 214 24% 88%;
+    --input: 214 24% 88%;
+    --ring: 221 83% 53%;
 
     --radius: 0.75rem;
 
@@ -70,6 +62,14 @@ All colors MUST be HSL.
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-glow: all 0.4s ease-in-out;
+    --transition-cyber: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+    /* Underground specific colors */
+    --matrix-green: 120 100% 50%;
+    --danger-red: 0 100% 50%;
+    --warning-orange: 30 100% 50%;
+    --cyber-blue: 200 100% 50%;
+    --terminal-green: 120 100% 40%;
 
     /* Sidebar (dark theme) */
     --sidebar-background: 220 18% 10%;
@@ -104,7 +104,20 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    letter-spacing: -0.01em;
+    background-image: radial-gradient(circle at 10% 0%, hsl(var(--primary) / 0.045), transparent 30rem), radial-gradient(circle at 90% 10%, hsl(var(--accent) / 0.04), transparent 26rem);
+    background-attachment: fixed;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.035em;
+  }
+
+  button, a, input, textarea, select {
+    transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+    transition-duration: 180ms;
+    transition-timing-function: ease-out;
   }
 
   /* Custom scrollbar */
@@ -126,9 +139,22 @@ All colors MUST be HSL.
 }
 
 @layer components {
-  /* Neon glow effects */
+  /* Shared surfaces */
   .neon-glow {
-    box-shadow: var(--shadow-neon);
+    box-shadow: 0 12px 30px hsl(var(--primary) / 0.12);
+  }
+
+  .surface-lift {
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--card) / 0.86);
+    box-shadow: 0 12px 36px hsl(222 47% 11% / 0.06);
+    backdrop-filter: blur(16px);
+  }
+
+  .surface-lift:hover {
+    border-color: hsl(var(--primary) / 0.28);
+    box-shadow: 0 18px 42px hsl(222 47% 11% / 0.1);
+    transform: translateY(-2px);
   }
 
   .accent-glow {
@@ -195,5 +221,321 @@ All colors MUST be HSL.
 
   .animated-border:hover::before {
     opacity: 1;
+  }
+
+  /* Underground Hub Specific Animations */
+  .matrix-rain {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .scanning-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #22c55e, transparent);
+    animation: scan 2s linear infinite;
+  }
+
+  .pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite alternate;
+  }
+
+  .terminal-cursor {
+    animation: blink 1s infinite;
+  }
+
+  .typewriter {
+    overflow: hidden;
+    border-right: 2px solid;
+    white-space: nowrap;
+    animation: typewriter 3s steps(40, end), blink-caret 0.75s step-end infinite;
+  }
+
+  .glitch-text {
+    animation: glitch 0.3s linear infinite;
+  }
+
+  .data-stream {
+    animation: data-flow 1.5s linear infinite;
+  }
+
+  .neon-pulse {
+    animation: neon-pulse 2s ease-in-out infinite alternate;
+  }
+
+  .cyber-scan {
+    animation: cyber-scan 3s linear infinite;
+  }
+
+  .matrix-bg {
+    background:
+      linear-gradient(90deg, transparent 0%, rgba(0, 255, 0, 0.03) 50%, transparent 100%),
+      linear-gradient(0deg, transparent 0%, rgba(0, 255, 0, 0.03) 50%, transparent 100%);
+    background-size: 50px 50px;
+    animation: matrix-move 10s linear infinite;
+  }
+
+  .underground-glow {
+    box-shadow:
+      0 0 5px currentColor,
+      0 0 10px currentColor,
+      0 0 15px currentColor,
+      0 0 20px currentColor;
+  }
+
+  .status-indicator {
+    animation: status-pulse 1.5s ease-in-out infinite;
+  }
+
+  .network-pulse {
+    animation: network-pulse 2s ease-in-out infinite;
+  }
+
+  .danger-blink {
+    animation: danger-blink 1s ease-in-out infinite;
+  }
+
+  .terminal-green {
+    color: #00ff00;
+    text-shadow: 0 0 5px #00ff00;
+  }
+
+  .cyber-border {
+    border: 1px solid;
+    border-image: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00, #00ffff) 1;
+    animation: border-cycle 3s linear infinite;
+  }
+
+  .hologram-effect {
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+    background-size: 200% 200%;
+    animation: hologram 2s ease-in-out infinite;
+  }
+}
+
+@layer utilities {
+  /* Underground Hub Keyframes */
+  @keyframes scan {
+    0% { transform: translateY(-100vh); }
+    100% { transform: translateY(100vh); }
+  }
+
+  @keyframes pulse-glow {
+    0% {
+      box-shadow: 0 0 5px currentColor;
+    }
+    100% {
+      box-shadow: 0 0 20px currentColor, 0 0 30px currentColor;
+    }
+  }
+
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  @keyframes typewriter {
+    from { width: 0; }
+    to { width: 100%; }
+  }
+
+  @keyframes blink-caret {
+    from, to { border-color: transparent; }
+    50% { border-color: currentColor; }
+  }
+
+  @keyframes glitch {
+    0% {
+      transform: translate(0);
+    }
+    20% {
+      transform: translate(-2px, 2px);
+    }
+    40% {
+      transform: translate(-2px, -2px);
+    }
+    60% {
+      transform: translate(2px, 2px);
+    }
+    80% {
+      transform: translate(2px, -2px);
+    }
+    100% {
+      transform: translate(0);
+    }
+  }
+
+  @keyframes data-flow {
+    0% {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+  }
+
+  @keyframes neon-pulse {
+    0% {
+      text-shadow: 0 0 5px currentColor;
+    }
+    100% {
+      text-shadow:
+        0 0 5px currentColor,
+        0 0 10px currentColor,
+        0 0 15px currentColor,
+        0 0 20px currentColor;
+    }
+  }
+
+  @keyframes cyber-scan {
+    0% {
+      background-position: 0% 0%;
+    }
+    100% {
+      background-position: 100% 100%;
+    }
+  }
+
+  @keyframes matrix-move {
+    0% {
+      background-position: 0% 0%;
+    }
+    100% {
+      background-position: 100% 100%;
+    }
+  }
+
+  @keyframes status-pulse {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.7;
+      transform: scale(1.1);
+    }
+  }
+
+  @keyframes network-pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+    }
+    70% {
+      box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    }
+  }
+
+  @keyframes danger-blink {
+    0%, 100% {
+      background-color: rgba(239, 68, 68, 0.1);
+    }
+    50% {
+      background-color: rgba(239, 68, 68, 0.3);
+    }
+  }
+
+  @keyframes border-cycle {
+    0% {
+      border-image-source: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00, #00ffff);
+    }
+    25% {
+      border-image-source: linear-gradient(45deg, #ff00ff, #ffff00, #00ffff, #ff00ff);
+    }
+    50% {
+      border-image-source: linear-gradient(45deg, #ffff00, #00ffff, #ff00ff, #ffff00);
+    }
+    75% {
+      border-image-source: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00, #00ffff);
+    }
+    100% {
+      border-image-source: linear-gradient(45deg, #ff00ff, #ffff00, #00ffff, #ff00ff);
+    }
+  }
+
+  @keyframes hologram {
+    0% {
+      background-position: -200% -200%;
+    }
+    100% {
+      background-position: 200% 200%;
+    }
+  }
+
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes spin-slow {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Utility classes */
+  .animate-gradient {
+    animation: gradient 3s ease infinite;
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  .animate-typewriter {
+    animation: typewriter 2s steps(40, end);
+  }
+
+  .animate-spin-slow {
+    animation: spin-slow 3s linear infinite;
+  }
+
+  .bg-300\% {
+    background-size: 300% 300%;
+  }
+
+  .text-shadow-glow {
+    text-shadow: 0 0 10px currentColor;
+  }
+
+  .border-glow {
+    border-color: currentColor;
+    box-shadow: 0 0 10px currentColor;
   }
 }

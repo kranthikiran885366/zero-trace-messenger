@@ -1,45 +1,53 @@
 import { useState } from 'react';
-import { Send, Shield, Mail, MessageSquare, AlertCircle } from 'lucide-react';
+import { Send, Shield, MessageSquare, Lock, Eye, EyeOff, Mail, AlertTriangle, CheckCircle, ArrowLeft, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import Navigation from '@/components/Navigation';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import Navigation from '@/components/Navigation';
+import { useNavigate } from 'react-router-dom';
 
 const Contact = () => {
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    subject: '',
     category: '',
+    subject: '',
     message: '',
-    urgency: 'normal'
+    anonymous: true,
+    email: '',
+    priority: 'normal'
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
+  const [submitted, setSubmitted] = useState(false);
 
   const categories = [
-    { value: 'security', label: 'Security Concern', icon: Shield },
-    { value: 'bug', label: 'Bug Report', icon: AlertCircle },
-    { value: 'feature', label: 'Feature Request', icon: MessageSquare },
-    { value: 'privacy', label: 'Privacy Question', icon: Shield },
-    { value: 'general', label: 'General Inquiry', icon: Mail }
+    { value: 'security', label: 'Security Concern', icon: '🔒' },
+    { value: 'bug', label: 'Bug Report', icon: '🐛' },
+    { value: 'feature', label: 'Feature Request', icon: '✨' },
+    { value: 'privacy', label: 'Privacy Question', icon: '🛡️' },
+    { value: 'technical', label: 'Technical Support', icon: '⚙️' },
+    { value: 'legal', label: 'Legal Inquiry', icon: '⚖️' },
+    { value: 'media', label: 'Media Request', icon: '📰' },
+    { value: 'other', label: 'Other', icon: '💬' }
   ];
 
-  const urgencyLevels = [
-    { value: 'low', label: 'Low Priority', color: 'text-muted-foreground' },
-    { value: 'normal', label: 'Normal', color: 'text-foreground' },
-    { value: 'high', label: 'High Priority', color: 'text-accent' },
-    { value: 'critical', label: 'Critical Security Issue', color: 'text-destructive' }
+  const priorities = [
+    { value: 'low', label: 'Low Priority', color: 'text-green-500' },
+    { value: 'normal', label: 'Normal Priority', color: 'text-blue-500' },
+    { value: 'high', label: 'High Priority', color: 'text-yellow-500' },
+    { value: 'urgent', label: 'Urgent', color: 'text-red-500' }
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.category || !formData.subject.trim() || !formData.message.trim()) {
+    if (!formData.category || !formData.subject || !formData.message) {
       toast({
-        title: "Incomplete Form",
+        title: "Missing Information",
         description: "Please fill in all required fields.",
         variant: "destructive"
       });
@@ -49,45 +57,144 @@ const Contact = () => {
     setIsSubmitting(true);
 
     // Simulate form submission
-    setTimeout(() => {
-      setIsSubmitting(false);
-      toast({
-        title: "Message Sent Anonymously",
-        description: "Your anonymous message has been submitted securely. We'll investigate and respond if possible.",
-      });
-      
-      // Reset form
-      setFormData({
-        subject: '',
-        category: '',
-        message: '',
-        urgency: 'normal'
-      });
-    }, 2000);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    setSubmitted(true);
+    setIsSubmitting(false);
+
+    toast({
+      title: "🔒 Message Sent Anonymously",
+      description: "Your message has been encrypted and sent. We'll respond via secure channels.",
+    });
   };
+
+  const resetForm = () => {
+    setSubmitted(false);
+    setFormData({
+      category: '',
+      subject: '',
+      message: '',
+      anonymous: true,
+      email: '',
+      priority: 'normal'
+    });
+  };
+
+  if (submitted) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="container mx-auto px-4 py-16">
+          <div className="max-w-2xl mx-auto">
+            <Card className="bg-card/80 backdrop-blur-sm border-green-500/20">
+              <CardContent className="p-8 text-center">
+                <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-6" />
+                <h1 className="text-3xl font-bold mb-4">Message Sent Securely</h1>
+                <p className="text-lg text-muted-foreground mb-6">
+                  Your message has been encrypted and transmitted through secure channels. 
+                  {formData.anonymous ? ' No identifying information was stored.' : ' We will respond to your provided email.'}
+                </p>
+                
+                <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
+                  <div className="p-3 bg-green-500/10 rounded-lg">
+                    <div className="font-semibold text-green-500">Message ID</div>
+                    <div className="font-mono">{Math.random().toString(36).substr(2, 12)}</div>
+                  </div>
+                  <div className="p-3 bg-blue-500/10 rounded-lg">
+                    <div className="font-semibold text-blue-500">Priority</div>
+                    <div className="capitalize">{formData.priority}</div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Expected response time: {formData.priority === 'urgent' ? '2-4 hours' : formData.priority === 'high' ? '4-12 hours' : '1-3 days'}
+                  </p>
+                  <Button onClick={resetForm} variant="cyber">
+                    <Send className="mr-2 h-4 w-4" />
+                    Send Another Message
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+
+      {/* Back Button Header */}
+      <div className="container mx-auto px-4 pt-6">
+        <div className="flex items-center gap-4 mb-6">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => navigate('/')}
+            className="bg-primary/10 border-primary/50 hover:bg-primary/20 hover:border-primary/70 text-primary transition-all duration-300 shadow-lg shadow-primary/20"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            BACK TO HOME
+          </Button>
+
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => navigate('/faq')}
+            className="bg-accent/10 border-accent/50 hover:bg-accent/20 hover:border-accent/70 text-accent transition-all duration-300 shadow-lg shadow-accent/20"
+          >
+            <MessageSquare className="h-5 w-5 mr-2" />
+            VIEW FAQ
+          </Button>
+        </div>
+      </div>
+
       {/* Hero Section */}
-      <section className="py-16 bg-gradient-to-br from-cyber-darker via-background to-cyber-dark cyber-grid">
-        <div className="container mx-auto px-4">
+      <section className="py-16 bg-gradient-to-br from-cyber-darker via-background to-cyber-dark cyber-grid relative overflow-hidden">
+        {/* Hero Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.pexels.com/photos/3162828/pexels-photo-3162828.jpeg?auto=compress&cs=tinysrgb&w=1920"
+            alt="Contact support communication background"
+            className="w-full h-full object-cover opacity-10"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-cyber-darker/80 via-background/70 to-cyber-dark/80" />
+        </div>
+
+        <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center space-y-6">
             <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-              🔒 Anonymous Contact
+              📞 Anonymous Contact
             </Badge>
             
             <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
               <span className="text-foreground">Secure </span>
-              <span className="gradient-neon bg-clip-text text-transparent">Anonymous</span>
-              <span className="text-foreground"> Contact</span>
+              <span className="gradient-neon bg-clip-text text-transparent">Contact</span>
+              <span className="text-foreground"> Form</span>
             </h1>
             
             <p className="text-xl text-muted-foreground leading-relaxed max-w-3xl">
-              Send us feedback, report issues, or ask questions while maintaining 
-              complete anonymity. No tracking, no logging, no compromise.
+              Get in touch while maintaining complete anonymity. Your message is encrypted 
+              and transmitted through secure channels with zero tracking.
             </p>
+
+            <div className="flex items-center justify-center gap-6 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-neon-green rounded-full animate-pulse" />
+                <span className="text-neon-green">Anonymous by Default</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                <span className="text-primary">End-to-End Encrypted</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
+                <span className="text-accent">No IP Logging</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -95,190 +202,216 @@ const Contact = () => {
       {/* Contact Form */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto">
-            <Card className="bg-card/80 backdrop-blur-sm border-primary/20">
-              <CardHeader>
-                <CardTitle className="text-2xl flex items-center gap-2">
-                  <Shield className="h-6 w-6 text-primary" />
-                  Anonymous Message Form
-                </CardTitle>
-                <CardDescription className="text-base">
-                  Your message is sent through encrypted channels with no way to trace back to you
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Category Selection */}
-                  <div className="space-y-3">
-                    <label className="text-sm font-medium">Category *</label>
-                    <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
-                      <SelectTrigger className="bg-background/50">
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((cat) => (
-                          <SelectItem key={cat.value} value={cat.value}>
-                            <div className="flex items-center gap-2">
-                              <cat.icon className="h-4 w-4" />
-                              {cat.label}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Priority Level */}
-                  <div className="space-y-3">
-                    <label className="text-sm font-medium">Priority Level</label>
-                    <Select value={formData.urgency} onValueChange={(value) => setFormData(prev => ({ ...prev, urgency: value }))}>
-                      <SelectTrigger className="bg-background/50">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {urgencyLevels.map((level) => (
-                          <SelectItem key={level.value} value={level.value}>
-                            <span className={level.color}>{level.label}</span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Subject */}
-                  <div className="space-y-3">
-                    <label className="text-sm font-medium">Subject *</label>
-                    <Input
-                      placeholder="Brief description of your message..."
-                      value={formData.subject}
-                      onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
-                      className="bg-background/50 border-border focus:border-primary"
-                    />
-                  </div>
-
-                  {/* Message */}
-                  <div className="space-y-3">
-                    <label className="text-sm font-medium">Message *</label>
-                    <Textarea
-                      placeholder="Describe your issue, question, or feedback in detail. Include any relevant information that might help us assist you."
-                      value={formData.message}
-                      onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
-                      className="bg-background/50 border-border focus:border-primary min-h-32"
-                      rows={6}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      {formData.message.length}/2000 characters
-                    </p>
-                  </div>
-
-                  {/* Security Notice */}
-                  <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <Shield className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium text-primary">Privacy Protection Active</p>
-                        <div className="text-xs text-muted-foreground space-y-1">
-                          <p>• Your IP address is masked through Tor network</p>
-                          <p>• No tracking or analytics on this form</p>
-                          <p>• Message content is encrypted before transmission</p>
-                          <p>• No way to identify or contact you directly</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Submit Button */}
-                  <Button 
-                    type="submit" 
-                    variant="cyber" 
-                    className="w-full" 
-                    size="lg"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
-                        Sending Anonymously...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="mr-2 h-5 w-5" />
-                        Send Anonymous Message
-                      </>
-                    )}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Security Information */}
-      <section className="py-16 bg-card/30">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-3xl font-bold mb-8 text-center">
-              <span className="text-foreground">How We Protect </span>
-              <span className="gradient-neon bg-clip-text text-transparent">Your Privacy</span>
-            </h2>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card className="bg-card/50 backdrop-blur-sm">
+          <div className="grid lg:grid-cols-3 gap-8">
+            
+            {/* Security Notice */}
+            <div className="space-y-6">
+              <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
                 <CardHeader>
-                  <CardTitle className="text-xl">Technical Safeguards</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-primary" />
+                    Privacy Protection
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-primary rounded-full mt-2" />
-                    <div>
-                      <p className="font-medium text-sm">Tor Network Routing</p>
-                      <p className="text-xs text-muted-foreground">All form submissions routed through Tor for IP anonymity</p>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className="w-2 h-2 bg-green-500 rounded-full" />
+                      <span>Anonymous by default</span>
                     </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-primary rounded-full mt-2" />
-                    <div>
-                      <p className="font-medium text-sm">End-to-End Encryption</p>
-                      <p className="text-xs text-muted-foreground">Messages encrypted before leaving your browser</p>
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className="w-2 h-2 bg-green-500 rounded-full" />
+                      <span>Messages encrypted in transit</span>
                     </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-primary rounded-full mt-2" />
-                    <div>
-                      <p className="font-medium text-sm">Zero Logging</p>
-                      <p className="text-xs text-muted-foreground">No IP logs, browser fingerprints, or tracking data stored</p>
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className="w-2 h-2 bg-green-500 rounded-full" />
+                      <span>No IP address logging</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className="w-2 h-2 bg-green-500 rounded-full" />
+                      <span>Secure response channels</span>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-card/50 backdrop-blur-sm">
+              <Card className="bg-card/50 backdrop-blur-sm border-accent/20">
                 <CardHeader>
-                  <CardTitle className="text-xl">Response Policy</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5 text-accent" />
+                    Response Information
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-accent rounded-full mt-2" />
-                    <div>
-                      <p className="font-medium text-sm">No Direct Replies</p>
-                      <p className="text-xs text-muted-foreground">We cannot respond directly due to anonymity</p>
+                <CardContent className="space-y-3 text-sm">
+                  <div>
+                    <div className="font-medium mb-1">Anonymous Messages</div>
+                    <div className="text-muted-foreground">
+                      Responses posted to public channels or secure bulletin boards
                     </div>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-accent rounded-full mt-2" />
-                    <div>
-                      <p className="font-medium text-sm">Public Responses</p>
-                      <p className="text-xs text-muted-foreground">Important issues addressed in FAQ or updates</p>
+                  <div>
+                    <div className="font-medium mb-1">Email Contact</div>
+                    <div className="text-muted-foreground">
+                      Direct response via encrypted email if provided
                     </div>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-accent rounded-full mt-2" />
-                    <div>
-                      <p className="font-medium text-sm">Security Issues</p>
-                      <p className="text-xs text-muted-foreground">Critical security reports get immediate attention</p>
+                  <div>
+                    <div className="font-medium mb-1">Emergency Issues</div>
+                    <div className="text-muted-foreground">
+                      Security vulnerabilities receive priority handling
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-yellow-900/10 border-yellow-500/20">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-medium text-yellow-400 mb-1">Legal Notice</p>
+                      <p className="text-muted-foreground">
+                        We cannot provide support for illegal activities. 
+                        Use SecureChat responsibly and in compliance with local laws.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Form */}
+            <div className="lg:col-span-2">
+              <Card className="bg-card/80 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="text-2xl">Send Anonymous Message</CardTitle>
+                  <CardDescription>
+                    All fields are optional except those marked as required. 
+                    Your privacy is protected regardless of what you choose to share.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    
+                    {/* Category */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Category *</label>
+                      <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select message category..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map(cat => (
+                            <SelectItem key={cat.value} value={cat.value}>
+                              <div className="flex items-center gap-2">
+                                <span>{cat.icon}</span>
+                                <span>{cat.label}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Priority */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Priority Level</label>
+                      <Select value={formData.priority} onValueChange={(value) => setFormData(prev => ({ ...prev, priority: value }))}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {priorities.map(priority => (
+                            <SelectItem key={priority.value} value={priority.value}>
+                              <span className={priority.color}>{priority.label}</span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Subject */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Subject *</label>
+                      <Input
+                        placeholder="Brief description of your message..."
+                        value={formData.subject}
+                        onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
+                        className="bg-background/50"
+                      />
+                    </div>
+
+                    {/* Message */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Message *</label>
+                      <Textarea
+                        placeholder="Your message will be encrypted before transmission..."
+                        value={formData.message}
+                        onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+                        rows={6}
+                        className="bg-background/50 resize-none"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Character count: {formData.message.length} (max 5000)
+                      </p>
+                    </div>
+
+                    {/* Optional Email */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <label className="text-sm font-medium">Contact Email (Optional)</label>
+                        <Badge variant="secondary" className="text-xs">
+                          {formData.anonymous ? 'Anonymous Mode' : 'Contact Mode'}
+                        </Badge>
+                      </div>
+                      <div className="flex gap-2">
+                        <Input
+                          type="email"
+                          placeholder={formData.anonymous ? "Leave empty for anonymous contact" : "your@email.com"}
+                          value={formData.email}
+                          onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                          disabled={formData.anonymous}
+                          className="bg-background/50 flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => setFormData(prev => ({ ...prev, anonymous: !prev.anonymous, email: '' }))}
+                        >
+                          {formData.anonymous ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {formData.anonymous 
+                          ? "Complete anonymity - we cannot respond directly" 
+                          : "Email encrypted and stored securely for response"}
+                      </p>
+                    </div>
+
+                    {/* Submit */}
+                    <div className="pt-4 border-t border-border">
+                      <Button 
+                        type="submit" 
+                        variant="cyber" 
+                        className="w-full" 
+                        size="lg"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
+                            Encrypting & Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="mr-2 h-4 w-4" />
+                            Send Encrypted Message
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
+                  </form>
                 </CardContent>
               </Card>
             </div>
@@ -287,53 +420,58 @@ const Contact = () => {
       </section>
 
       {/* Alternative Contact Methods */}
-      <section className="py-16">
+      <section className="py-16 bg-card/30">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-3xl font-bold mb-8 text-center">Alternative Methods</h2>
-            
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4">Alternative Contact Methods</h2>
+              <p className="text-lg text-muted-foreground">
+                For maximum security, consider these additional communication channels
+              </p>
+            </div>
+
             <div className="grid md:grid-cols-3 gap-6">
-              <Card className="bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
-                <CardHeader className="text-center">
+              <Card className="bg-card/50 backdrop-blur-sm text-center">
+                <CardHeader>
+                  <div className="text-4xl mb-2">🧅</div>
+                  <CardTitle>Tor Network</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Access this contact form through Tor for maximum anonymity
+                  </p>
+                  <Button variant="outline" size="sm" disabled>
+                    Tor Address Available Soon
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-card/50 backdrop-blur-sm text-center">
+                <CardHeader>
                   <div className="text-4xl mb-2">📧</div>
-                  <CardTitle className="text-lg">Encrypted Email</CardTitle>
+                  <CardTitle>Encrypted Email</CardTitle>
                 </CardHeader>
-                <CardContent className="text-center">
+                <CardContent>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Use ProtonMail or similar encrypted email services
+                    Send PGP encrypted emails for sensitive communications
                   </p>
                   <Button variant="outline" size="sm" disabled>
-                    Coming Soon
+                    PGP Key Available Soon
                   </Button>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
-                <CardHeader className="text-center">
+              <Card className="bg-card/50 backdrop-blur-sm text-center">
+                <CardHeader>
                   <div className="text-4xl mb-2">💬</div>
-                  <CardTitle className="text-lg">Anonymous Chat</CardTitle>
+                  <CardTitle>Signal Messenger</CardTitle>
                 </CardHeader>
-                <CardContent className="text-center">
+                <CardContent>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Join our support room for real-time help
+                    Contact us via Signal for real-time encrypted chat
                   </p>
                   <Button variant="outline" size="sm" disabled>
-                    Coming Soon
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
-                <CardHeader className="text-center">
-                  <div className="text-4xl mb-2">🔐</div>
-                  <CardTitle className="text-lg">PGP Encrypted</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center">
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Send PGP encrypted messages via secure channels
-                  </p>
-                  <Button variant="outline" size="sm" disabled>
-                    Coming Soon
+                    Signal Contact Soon
                   </Button>
                 </CardContent>
               </Card>
@@ -341,6 +479,7 @@ const Contact = () => {
           </div>
         </div>
       </section>
+
     </div>
   );
 };

@@ -1,11 +1,12 @@
-import { ArrowRight, Shield, Lock, Zap, Eye, Server, Router } from 'lucide-react';
+import { ArrowRight, Shield, Lock, Zap, Eye, Server, Router, ArrowLeft, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Navigation from '@/components/Navigation';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const HowItWorks = () => {
+  const navigate = useNavigate();
   const steps = [
     {
       icon: Shield,
@@ -57,6 +58,31 @@ const HowItWorks = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
+
+      {/* Back Button Header */}
+      <div className="container mx-auto px-4 pt-6">
+        <div className="flex items-center gap-4 mb-6">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => navigate('/')}
+            className="bg-primary/10 border-primary/50 hover:bg-primary/20 hover:border-primary/70 text-primary transition-all duration-300 shadow-lg shadow-primary/20"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            BACK TO HOME
+          </Button>
+
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => navigate('/features')}
+            className="bg-accent/10 border-accent/50 hover:bg-accent/20 hover:border-accent/70 text-accent transition-all duration-300 shadow-lg shadow-accent/20"
+          >
+            <Shield className="h-5 w-5 mr-2" />
+            VIEW FEATURES
+          </Button>
+        </div>
+      </div>
       
       {/* Hero Section */}
       <section className="py-16 bg-gradient-to-br from-cyber-darker via-background to-cyber-dark cyber-grid">

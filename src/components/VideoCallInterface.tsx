@@ -1,11 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
-import { Video, VideoOff, Mic, MicOff, Phone, PhoneOff, Settings, Shield, Monitor, Users } from 'lucide-react';
+import { Video, VideoOff, Mic, MicOff, Phone, PhoneOff, Settings, Shield, Monitor, Users, ArrowLeft, Home, Share2, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 const VideoCallInterface = () => {
+  const navigate = useNavigate();
+  const { roomId } = useParams();
+  const { toast } = useToast();
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isCallActive, setIsCallActive] = useState(false);
@@ -53,6 +58,17 @@ const VideoCallInterface = () => {
     setIsAudioEnabled(!isAudioEnabled);
   };
 
+  const copyRoomLink = () => {
+    const link = `${window.location.origin}/video/${roomId}`;
+    navigator.clipboard.writeText(link);
+    toast({
+      title: "Video Link Copied",
+      description: "Share this link to invite others to the video call"
+    });
+  };
+
+  const callUsers: any[] = []; // Placeholder for call participants
+
   return (
     <div className="h-screen bg-background flex flex-col">
       {/* Header */}
@@ -80,19 +96,78 @@ const VideoCallInterface = () => {
 
             <div className="flex items-center gap-4">
               {isCallActive && (
-                <div className="text-sm text-muted-foreground">
-                  Duration: {formatDuration(callDuration)}
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <span>Duration: {formatDuration(callDuration)}</span>
+                  <span>Participants: {callUsers.length + 1}</span>
                 </div>
               )}
-              <div className="flex items-center gap-2 text-sm">
-                <span>IP Masking:</span>
-                <Switch 
-                  checked={ipMasked} 
-                  onCheckedChange={setIpMasked}
-                  className="data-[state=checked]:bg-primary"
-                />
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(`/chat/${roomId}`)}
+                  className="bg-primary/10 border-primary/50 hover:bg-primary/20 text-primary"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-1" />
+                  BACK TO CHAT
+                </Button>
+                <Button variant="ghost" size="sm" onClick={copyRoomLink}>
+                  <Share2 className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setShowSettings && setShowSettings(!showSettings)}>
+                  <Settings className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (window.confirm('⚠️ Are you sure you want to leave the video call?')) {
+                      navigate('/');
+                    }
+                  }}
+                  className="bg-red-900/20 border-red-500/50 hover:bg-red-800/30 text-red-400"
+                >
+                  <PhoneOff className="h-4 w-4 mr-1" />
+                  LEAVE
+                </Button>
               </div>
             </div>
+
+            {/* Settings Panel */}
+            {showSettings && (
+              <div className="mt-4 p-4 bg-card/50 rounded-lg border">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Video Quality</label>
+                    <Select value={videoQuality} onValueChange={setVideoQuality}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {videoQualityOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">IP Masking</span>
+                      <Switch
+                        checked={ipMasked}
+                        onCheckedChange={setIpMasked}
+                        className="data-[state=checked]:bg-primary"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Route through proxy servers for privacy
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </CardHeader>
       </Card>
@@ -138,13 +213,23 @@ const VideoCallInterface = () => {
                 </div>
 
                 <div className="space-y-3">
-                  <Button 
-                    onClick={startCall} 
-                    variant="cyber" 
+                  <Button
+                    onClick={startCall}
+                    variant="cyber"
                     className="w-full"
+                    disabled={isConnecting}
                   >
-                    <Phone className="mr-2 h-4 w-4" />
-                    Start Secure Call
+                    {isConnecting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
+                        Connecting...
+                      </>
+                    ) : (
+                      <>
+                        <Phone className="mr-2 h-4 w-4" />
+                        Start Secure Call
+                      </>
+                    )}
                   </Button>
                   
                   <div className="text-xs text-center text-muted-foreground space-y-1">
@@ -226,6 +311,7 @@ const VideoCallInterface = () => {
                 size="lg"
                 onClick={toggleAudio}
                 className="rounded-full p-4"
+                title={isAudioEnabled ? "Mute" : "Unmute"}
               >
                 {isAudioEnabled ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
               </Button>
@@ -235,8 +321,19 @@ const VideoCallInterface = () => {
                 size="lg"
                 onClick={toggleVideo}
                 className="rounded-full p-4"
+                title={isVideoEnabled ? "Turn off camera" : "Turn on camera"}
               >
                 {isVideoEnabled ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
+              </Button>
+
+              <Button
+                variant={isScreenSharing ? "neon" : "ghost"}
+                size="lg"
+                onClick={toggleScreenShare}
+                className="rounded-full p-4"
+                title={isScreenSharing ? "Stop sharing" : "Share screen"}
+              >
+                {isScreenSharing ? <ScreenShareOff className="h-5 w-5" /> : <ScreenShare className="h-5 w-5" />}
               </Button>
 
               <Button
@@ -244,6 +341,7 @@ const VideoCallInterface = () => {
                 size="lg"
                 onClick={endCall}
                 className="rounded-full p-4 bg-red-600 hover:bg-red-700"
+                title="End call"
               >
                 <PhoneOff className="h-5 w-5" />
               </Button>
@@ -251,14 +349,22 @@ const VideoCallInterface = () => {
               <Button
                 variant="ghost"
                 size="lg"
+                onClick={() => navigate(`/chat/${roomId}`)}
                 className="rounded-full p-4"
+                title="Open chat"
               >
-                <Settings className="h-5 w-5" />
+                <MessageSquare className="h-5 w-5" />
               </Button>
             </div>
 
-            <div className="text-xs text-center text-muted-foreground mt-3">
-              🔐 P2P encrypted • 🌐 {ipMasked ? 'IP masked via TURN relay' : 'Direct connection'} • 🚫 No recording
+            <div className="text-xs text-center text-muted-foreground mt-3 space-y-1">
+              <p>🔐 P2P encrypted • 🌐 {ipMasked ? 'IP masked via TURN relay' : 'Direct connection'} • 🚫 No recording</p>
+              {encryptionKey && (
+                <p className="font-mono">Fingerprint: {encryption.generateFingerprint(encryptionKey)}</p>
+              )}
+              {isScreenSharing && (
+                <p className="text-neon-blue animate-pulse">📺 Screen sharing active</p>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -1,11 +1,12 @@
-import { Shield, Timer, Video, Lock, Zap, Globe, Eye, Server, Smartphone, Headphones, FileText, AlertTriangle } from 'lucide-react';
+import { Shield, Timer, Video, Lock, Zap, Globe, Eye, Server, Smartphone, Headphones, FileText, AlertTriangle, ArrowLeft, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Navigation from '@/components/Navigation';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Features = () => {
+  const navigate = useNavigate();
   const coreFeatures = [
     {
       icon: Shield,
@@ -131,10 +132,45 @@ const Features = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
+
+      {/* Back Button Header */}
+      <div className="container mx-auto px-4 pt-6">
+        <div className="flex items-center gap-4 mb-6">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => navigate('/')}
+            className="bg-primary/10 border-primary/50 hover:bg-primary/20 hover:border-primary/70 text-primary transition-all duration-300 shadow-lg shadow-primary/20"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            BACK TO HOME
+          </Button>
+
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => navigate('/create')}
+            className="bg-accent/10 border-accent/50 hover:bg-accent/20 hover:border-accent/70 text-accent transition-all duration-300 shadow-lg shadow-accent/20"
+          >
+            <Lock className="h-5 w-5 mr-2" />
+            CREATE SECURE ROOM
+          </Button>
+        </div>
+      </div>
       
       {/* Hero Section */}
-      <section className="py-16 bg-gradient-to-br from-cyber-darker via-background to-cyber-dark cyber-grid">
-        <div className="container mx-auto px-4">
+      <section className="py-16 bg-gradient-to-br from-cyber-darker via-background to-cyber-dark cyber-grid relative overflow-hidden">
+        {/* Hero Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.pexels.com/photos/8090263/pexels-photo-8090263.jpeg?auto=compress&cs=tinysrgb&w=1920"
+            alt="Cybersecurity technology background"
+            className="w-full h-full object-cover opacity-15"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-cyber-darker/80 via-background/70 to-cyber-dark/80" />
+        </div>
+
+        <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center space-y-6">
             <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
               🚀 Complete Feature Overview

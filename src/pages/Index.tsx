@@ -1,282 +1,825 @@
-import { useState } from 'react';
-import { Shield, MessageSquare, Timer, Eye, EyeOff, Video, Lock, Zap, Globe } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowRight, Shield, Users, Zap, Globe, Lock, MessageCircle, Video, FileText, Layers, Share, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import Navigation from '@/components/Navigation';
-import heroImage from '@/assets/hero-image.jpg';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { api, handleAPIError } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
+// Real-time updates now handled with direct SSE connection
 
 const Index = () => {
+  const navigate = useNavigate();
+  const { user, isAuthenticated, createAnonymousSession, isLoading } = useAuth();
+  const { toast } = useToast();
+  
+  // Real-time stats from backend
+  const [stats, setStats] = useState({
+    activeUsers: 0,
+    totalRooms: 0,
+    messagesSent: 0,
+    filesShared: 0,
+    onlineUsers: 0
+  });
+
+  // Connection status for visual indicator
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('connecting');
+  
+  // Room joining
   const [roomCode, setRoomCode] = useState('');
-  const [stealthMode, setStealthMode] = useState(false);
+  const [roomPassword, setRoomPassword] = useState('');
+  const [isJoining, setIsJoining] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [pendingRoomCode, setPendingRoomCode] = useState('');
+  
+  // Anonymous session creation
+  const [nickname, setNickname] = useState('');
+  const [showNicknameDialog, setShowNicknameDialog] = useState(false);
+  
+  // Real-time Server-Sent Events connection for live updates
+  useEffect(() => {
+    console.log('🚀 Initializing real-time connection...');
+
+    // Robust SSE connection with better error handling
+    const connectSSE = () => {
+      const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+      const sseUrl = `${apiUrl}/api/events`;
+      console.log('📡 Connecting to SSE:', sseUrl);
+
+      let eventSource: EventSource;
+
+      try {
+        eventSource = new EventSource(sseUrl);
+      } catch (error) {
+        console.error('❌ Failed to create SSE connection:', error);
+        setConnectionStatus('error');
+        return null;
+      }
+
+      eventSource.onopen = () => {
+        console.log('✅ SSE connection opened successfully');
+        setConnectionStatus('connected');
+      };
+
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+
+          if (data.type === 'stats_update' && data.data) {
+            setStats({
+              activeUsers: data.data.activeUsers || 0,
+              totalRooms: data.data.totalRooms || 0,
+              messagesSent: data.data.messagesSent || 0,
+              filesShared: data.data.filesShared || 0,
+              onlineUsers: data.data.onlineUsers || 0
+            });
+            setConnectionStatus('connected');
+          }
+        } catch (error) {
+          console.error('❌ Failed to parse SSE message:', error);
+        }
+      };
+
+      eventSource.onerror = (error) => {
+        console.warn('⚠️ SSE connection error:', {
+          readyState: eventSource.readyState
+        });
+
+        if (eventSource.readyState === EventSource.CLOSED) {
+          setConnectionStatus('disconnected');
+        } else {
+          setConnectionStatus('connecting');
+        }
+      };
+
+      return eventSource;
+    };
+
+    const eventSource = connectSSE();
+
+    // Set initial status
+    setConnectionStatus(eventSource ? 'connecting' : 'error');
+
+    // Health check to ensure connection stability
+    const healthCheck = () => {
+      if (eventSource && eventSource.readyState === EventSource.CLOSED) {
+        console.log('🔄 SSE connection lost, falling back to HTTP polling');
+        setConnectionStatus('disconnected');
+      }
+    };
+
+    // Run health check every 30 seconds
+    const healthCheckInterval = setInterval(healthCheck, 30000);
+
+    // Track if we have an active HTTP request to prevent overlaps
+    let isHttpRequestActive = false;
+    let retryCount = 0;
+    const maxRetries = 3;
+
+    // Fallback HTTP polling in case SSE fails
+    const loadStatsHTTP = async (isRetry = false) => {
+      // Prevent multiple simultaneous requests
+      if (isHttpRequestActive) {
+        console.log('📊 HTTP request already active, skipping...');
+        return;
+      }
+
+      // Only use HTTP fallback if SSE is not working
+      if (eventSource && eventSource.readyState === EventSource.OPEN) {
+        return;
+      }
+
+      isHttpRequestActive = true;
+
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+        const statsUrl = `${apiUrl}/api/auth/stats`;
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // Reduced timeout
+
+        const response = await fetch(statsUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+          },
+          credentials: 'same-origin',
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const data = await response.json();
+
+          if (data.success && data.stats) {
+            console.log('📊 HTTP fallback stats received:', data.stats);
+            setStats({
+              activeUsers: data.stats.activeUsers || 0,
+              totalRooms: data.stats.totalRooms || 0,
+              messagesSent: data.stats.messagesSent || 0,
+              filesShared: data.stats.filesShared || 0,
+              onlineUsers: data.stats.onlineUsers || 0
+            });
+            setConnectionStatus('connected');
+            retryCount = 0; // Reset retry count on success
+          }
+        } else {
+          console.warn(`⚠️ HTTP stats failed: ${response.status} ${response.statusText}`);
+          setConnectionStatus('error');
+        }
+      } catch (error) {
+        if (error.name === 'AbortError') {
+          console.warn('���️ HTTP stats request timed out');
+        } else if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+          console.warn('⚠️ Network error - unable to reach server');
+
+          // Retry logic for network failures
+          if (!isRetry && retryCount < maxRetries) {
+            retryCount++;
+            console.log(`🔄 Retrying HTTP request (${retryCount}/${maxRetries}) in 2 seconds...`);
+            setTimeout(() => {
+              isHttpRequestActive = false;
+              loadStatsHTTP(true);
+            }, 2000);
+            return; // Don't set isHttpRequestActive = false yet
+          } else {
+            setConnectionStatus('disconnected');
+            retryCount = 0; // Reset retry count
+          }
+        } else {
+          console.warn('⚠️ HTTP stats fallback failed:', error.message || error);
+          setConnectionStatus('error');
+        }
+      } finally {
+        if (isRetry || retryCount >= maxRetries) {
+          isHttpRequestActive = false;
+        }
+      }
+    };
+
+    // Initial load and fallback polling (less frequent to prevent errors)
+    setTimeout(loadStatsHTTP, 1000); // Delay initial load by 1 second
+    const httpInterval = setInterval(loadStatsHTTP, 10000); // Increased to 10 seconds
+
+    // Cleanup
+    return () => {
+      clearInterval(httpInterval);
+      clearInterval(healthCheckInterval);
+      if (eventSource) {
+        console.log('🔌 Closing SSE connection');
+        eventSource.close();
+      }
+    };
+  }, []);
+
+  // Animate numbers
+  const [animatedStats, setAnimatedStats] = useState(stats);
+  
+  useEffect(() => {
+    const animateNumber = (start: number, end: number, duration: number) => {
+      const startTime = Date.now();
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const current = Math.floor(start + (end - start) * progress);
+        return current;
+      };
+      
+      const updateAnimation = () => {
+        const current = animate();
+        if (current < end) {
+          requestAnimationFrame(updateAnimation);
+        }
+        return current;
+      };
+      
+      return updateAnimation();
+    };
+
+    // Animate each stat
+    const duration = 2000; // 2 seconds
+    const interval = setInterval(() => {
+      setAnimatedStats(prev => ({
+        activeUsers: animateNumber(prev.activeUsers, stats.activeUsers, duration),
+        totalRooms: animateNumber(prev.totalRooms, stats.totalRooms, duration),
+        messagesSent: animateNumber(prev.messagesSent, stats.messagesSent, duration),
+        filesShared: animateNumber(prev.filesShared, stats.filesShared, duration),
+        onlineUsers: animateNumber(prev.onlineUsers, stats.onlineUsers, duration)
+      }));
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [stats]);
+
+  // Handle room code validation and joining
+  const validateRoomCode = (code: string): boolean => {
+    return /^[A-F0-9]{16}$/i.test(code.replace(/\s/g, ''));
+  };
+
+  const handleJoinRoom = async () => {
+    if (!roomCode.trim()) {
+      toast({
+        title: "Room Code Required",
+        description: "Please enter a valid room code to join.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const cleanCode = roomCode.replace(/\s/g, '').toUpperCase();
+    
+    if (!validateRoomCode(cleanCode)) {
+      toast({
+        title: "Invalid Room Code",
+        description: "Room code must be 16 hexadecimal characters.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      setPendingRoomCode(cleanCode);
+      setShowNicknameDialog(true);
+      return;
+    }
+
+    await attemptJoinRoom(cleanCode);
+  };
+
+  const attemptJoinRoom = async (code: string, password?: string) => {
+    try {
+      setIsJoining(true);
+      
+      // First, get room info to check if password is required
+      const roomInfo = await api.getRoomInfo(code);
+      
+      if (roomInfo.room.settings.hasPassword && !password) {
+        setPendingRoomCode(code);
+        setShowPasswordDialog(true);
+        return;
+      }
+
+      // Join the room (validates access and prepares encryption)
+      await api.joinRoom(code, password);
+
+      toast({
+        title: "Joining Room",
+        description: "Connecting to secure chat session...",
+      });
+
+      // Navigate to chat and pass roomCode so Chat page can rehydrate/join context
+      navigate(`/chat/${roomInfo.room.roomId}`, { state: { roomCode: code } });
+      
+    } catch (error: any) {
+      if (error.message.includes('Password required')) {
+        setPendingRoomCode(code);
+        setShowPasswordDialog(true);
+      } else {
+        handleAPIError(error, "Failed to join room");
+      }
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
+  const handlePasswordSubmit = async () => {
+    if (!roomPassword.trim()) {
+      toast({
+        title: "Password Required",
+        description: "Please enter the room password.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setShowPasswordDialog(false);
+    await attemptJoinRoom(pendingRoomCode, roomPassword);
+    setRoomPassword('');
+  };
+
+  const handleCreateAnonymousSession = async () => {
+    if (!nickname.trim()) {
+      toast({
+        title: "Nickname Required",
+        description: "Please enter a nickname to continue.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      await createAnonymousSession(nickname.trim(), {
+        theme: 'cyber',
+        autoDeleteMessages: true,
+        enableNotifications: true
+      });
+      
+      setShowNicknameDialog(false);
+      
+      // If there's a pending room to join, join it
+      if (pendingRoomCode) {
+        await attemptJoinRoom(pendingRoomCode);
+        setPendingRoomCode('');
+      }
+      
+    } catch (error) {
+      // Error already handled in context
+    }
+  };
+
+  const quickActions = [
+    {
+      title: 'Join Room',
+      description: 'Enter a room code to join an existing secure chat',
+      icon: Users,
+      action: () => setShowNicknameDialog(!isAuthenticated),
+      primary: true
+    },
+    {
+      title: 'Create Room',
+      description: 'Start a new encrypted chat room with custom settings',
+      icon: Lock,
+      action: () => {
+        if (isAuthenticated) {
+          navigate('/create');
+        } else {
+          setShowNicknameDialog(true);
+        }
+      }
+    },
+    {
+      title: 'Share Files',
+      description: 'Securely share files with end-to-end encryption',
+      icon: Share,
+      action: () => {
+        if (isAuthenticated) {
+          navigate('/files');
+        } else {
+          setShowNicknameDialog(true);
+        }
+      }
+    },
+    {
+      title: 'Underground',
+      description: 'Access advanced privacy and anonymity tools',
+      icon: Globe,
+      action: () => {
+        if (isAuthenticated) {
+          navigate('/underground');
+        } else {
+          setShowNicknameDialog(true);
+        }
+      }
+    }
+  ];
 
   const features = [
     {
       icon: Shield,
-      title: "IP Masking",
-      description: "Your real IP is never exposed with Tor/VPN routing"
-    },
-    {
-      icon: Timer,
-      title: "Self-Destruct Messages",
-      description: "Messages disappear in 15s, 1m, 5m, 15m, or on read"
-    },
-    {
-      icon: Video,
-      title: "Encrypted Video Calls",
-      description: "P2P encrypted calls with complete anonymity"
-    },
-    {
-      icon: Lock,
-      title: "No Trace Logging",
-      description: "Zero data storage, no metadata, no tracking"
+      title: 'Military-Grade Encryption',
+      description: 'AES-256 end-to-end encryption ensures your messages remain private',
+      stats: '256-bit encryption'
     },
     {
       icon: Zap,
-      title: "Anonymous Login",
-      description: "No email, phone, or personal data required"
+      title: 'Self-Destructing Messages',
+      description: 'Messages automatically delete after customizable time periods',
+      stats: '15s - 24h timers'
     },
     {
-      icon: Globe,
-      title: "Stealth Mode",
-      description: "App disguised as calculator or note-taking tool"
+      icon: Video,
+      title: 'Encrypted Video Calls',
+      description: 'P2P encrypted video/audio calls with IP masking via TURN relays',
+      stats: 'WebRTC P2P'
+    },
+    {
+      icon: FileText,
+      title: 'Secure File Sharing',
+      description: 'Share files with encryption, download limits, and burn-after-reading',
+      stats: 'Up to 100MB'
     }
   ];
-
-  if (stealthMode) {
-    return (
-      <div className="min-h-screen bg-gray-100 p-8 flex items-center justify-center">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Simple Calculator</h2>
-          <div className="grid grid-cols-4 gap-2">
-            {['7', '8', '9', '/', '4', '5', '6', '*', '1', '2', '3', '-', '0', '.', '=', '+'].map((btn) => (
-              <button 
-                key={btn}
-                className="p-4 bg-gray-200 hover:bg-gray-300 rounded text-lg font-semibold"
-                onClick={() => btn === '888' && setStealthMode(false)}
-              >
-                {btn}
-              </button>
-            ))}
-          </div>
-          <div className="mt-4 text-xs text-gray-500 text-center">
-            Type 888+888 to access secure chat
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
+      
       {/* Hero Section */}
-      <section className="relative overflow-hidden cyber-grid">
-        <div className="absolute inset-0 bg-gradient-to-br from-cyber-darker via-background to-cyber-dark opacity-90" />
-        
-        <div className="relative container mx-auto px-4 py-16 lg:py-24">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8 animate-fade-in-up">
-              <div className="space-y-4">
-                <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-                  🔐 Ultra-Secure Anonymous Chat
-                </Badge>
-                <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
-                  <span className="gradient-neon bg-clip-text text-transparent">
-                    Secure Chat
-                  </span>
-                  <br />
-                  <span className="text-foreground">No Trace, No Limits</span>
-                </h1>
-                <p className="text-xl text-muted-foreground leading-relaxed">
-                  End-to-end encrypted messaging with IP masking, self-destructing messages, 
-                  and complete anonymity. Your conversations leave no digital footprint.
-                </p>
-              </div>
+      <section className="relative py-20 lg:py-32 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-accent/5" />
+        <div className="absolute inset-0 cyber-grid opacity-30" />
 
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button 
-                  size="lg" 
-                  variant="cyber" 
-                  className="text-lg px-8 py-6 animate-neon-pulse"
-                >
-                  <MessageSquare className="mr-2 h-5 w-5" />
-                  Start Anonymous Chat
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="neon" 
-                  className="text-lg px-8 py-6"
-                >
-                  <Shield className="mr-2 h-5 w-5" />
-                  How It Works
-                </Button>
-              </div>
-
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-neon-green rounded-full animate-pulse" />
-                  <span>No Registration Required</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                  <span>Military-Grade Encryption</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 rounded-3xl blur-3xl animate-glow-pulse" />
-              <img 
-                src={heroImage} 
-                alt="Secure Chat Interface" 
-                className="relative rounded-3xl shadow-2xl cyber-shadow w-full h-auto"
-              />
-            </div>
-          </div>
+        {/* Hero Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.pexels.com/photos/5475752/pexels-photo-5475752.jpeg?auto=compress&cs=tinysrgb&w=1920"
+            alt="Cybersecurity encryption background"
+            className="w-full h-full object-cover opacity-10"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/20" />
         </div>
-      </section>
 
-      {/* Quick Join Section */}
-      <section className="py-16 bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto">
-            <Card className="animated-border bg-card/80 backdrop-blur-sm">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl flex items-center justify-center gap-2">
-                  <MessageSquare className="h-6 w-6 text-primary" />
-                  Quick Access
-                </CardTitle>
-                <CardDescription>
-                  Join an existing room or create a new anonymous chat
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-foreground mb-2 block">
-                      Enter Room Code
-                    </label>
-                    <Input 
-                      placeholder="Paste room code here..."
-                      value={roomCode}
-                      onChange={(e) => setRoomCode(e.target.value)}
-                      className="bg-background/50 border-border focus:border-primary"
-                    />
-                  </div>
-                  <Button variant="cyber" className="w-full" disabled={!roomCode.trim()}>
-                    <Lock className="mr-2 h-4 w-4" />
-                    Join Secure Room
-                  </Button>
-                </div>
-
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-border" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card px-2 text-muted-foreground">Or</span>
-                  </div>
-                </div>
-
-                <Button variant="neon" className="w-full">
-                  <Zap className="mr-2 h-4 w-4" />
-                  Create New Anonymous Room
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Grid */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-              <span className="text-foreground">Ultimate Privacy</span>{' '}
-              <span className="gradient-neon bg-clip-text text-transparent">Features</span>
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Advanced security features designed for maximum anonymity and zero digital footprint
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="max-w-4xl mx-auto text-center space-y-8">
+            {/* Status Badge */}
+            <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 px-4 py-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse" />
+              {animatedStats.onlineUsers} users online now
+            </Badge>
+            
+            <h1 className="text-4xl lg:text-7xl font-bold leading-tight">
+              <span className="text-foreground">Secure </span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
+                Anonymous
+              </span>
+              <span className="text-foreground"> Communication</span>
+            </h1>
+            
+            <p className="text-xl lg:text-2xl text-muted-foreground leading-relaxed max-w-3xl mx-auto">
+              End-to-end encrypted messaging with military-grade security, self-destructing messages, 
+              and advanced anonymity features. No registration required.
             </p>
-          </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, index) => (
-              <Card 
-                key={index} 
-                className="group hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 bg-card/50 backdrop-blur-sm animated-border"
-              >
-                <CardHeader>
-                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                    <feature.icon className="h-6 w-6 text-primary" />
+            {/* Quick Join Section */}
+            <div className="max-w-2xl mx-auto space-y-6">
+              {user ? (
+                <Card className="bg-card/80 backdrop-blur-sm border-primary/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Shield className="h-5 w-5 text-primary" />
+                      Welcome back, {user.nickname}!
+                    </CardTitle>
+                    <CardDescription>
+                      Your secure session is active. Join a room or create a new one.
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              ) : null}
+              
+              <Card className="bg-card/80 backdrop-blur-sm border-primary/20">
+                <CardContent className="p-6">
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <Input
+                      placeholder="Enter room code (e.g., A1B2C3D4E5F6G7H8)"
+                      value={roomCode}
+                      onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                      className="flex-1 bg-background/50 border-border/50"
+                      onKeyPress={(e) => e.key === 'Enter' && handleJoinRoom()}
+                      maxLength={19} // 16 chars + 3 spaces for formatting
+                    />
+                    <Button 
+                      onClick={handleJoinRoom}
+                      disabled={isJoining || isLoading}
+                      className="px-8"
+                      size="lg"
+                    >
+                      {isJoining ? (
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                      ) : (
+                        <ArrowRight className="h-4 w-4 mr-2" />
+                      )}
+                      Join Room
+                    </Button>
                   </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-base leading-relaxed">
-                    {feature.description}
-                  </CardDescription>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Room codes are 16-character hexadecimal strings
+                  </p>
                 </CardContent>
               </Card>
-            ))}
+            </div>
+
+            {/* Quick Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+              {quickActions.map((action, index) => (
+                <Card 
+                  key={index}
+                  className={`group cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 border-border/50 ${
+                    action.primary ? 'border-primary/50 bg-primary/5' : ''
+                  }`}
+                  onClick={action.action}
+                >
+                  <CardContent className="p-6 text-center">
+                    <action.icon className={`h-12 w-12 mx-auto mb-4 transition-colors ${
+                      action.primary ? 'text-primary' : 'text-muted-foreground group-hover:text-primary'
+                    }`} />
+                    <h3 className="font-semibold mb-2">{action.title}</h3>
+                    <p className="text-sm text-muted-foreground">{action.description}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Stealth Mode Toggle */}
+      {/* Live Stats Section */}
       <section className="py-16 bg-card/30">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
-            <Card className="bg-accent/5 border-accent/20">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-2xl flex items-center gap-2">
-                      {stealthMode ? <EyeOff className="h-6 w-6" /> : <Eye className="h-6 w-6" />}
-                      Stealth Mode
-                    </CardTitle>
-                    <CardDescription className="text-base mt-2">
-                      Disguise the app as a simple calculator to avoid detection
-                    </CardDescription>
-                  </div>
-                  <Button 
-                    variant={stealthMode ? "destructive" : "default"}
-                    onClick={() => setStealthMode(!stealthMode)}
-                    className="px-6"
-                  >
-                    {stealthMode ? "Disable" : "Enable"} Stealth
-                  </Button>
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4">Live Network Statistics</h2>
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <div className={`w-2 h-2 rounded-full animate-pulse ${
+                  connectionStatus === 'connected' ? 'bg-green-500' :
+                  connectionStatus === 'connecting' ? 'bg-yellow-500' :
+                  connectionStatus === 'error' ? 'bg-red-500' : 'bg-gray-500'
+                }`} />
+                <span className="text-sm text-muted-foreground">
+                  {connectionStatus === 'connected' ? 'Live Updates Active' :
+                   connectionStatus === 'connecting' ? 'Connecting...' :
+                   connectionStatus === 'error' ? 'Connection Issues' : 'Disconnected'}
+                </span>
+              </div>
+              <p className="text-muted-foreground">Real-time data from our secure infrastructure</p>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+              <div className="text-center">
+                <div className="text-3xl lg:text-4xl font-bold text-primary mb-2">
+                  {animatedStats.activeUsers.toLocaleString()}
                 </div>
-              </CardHeader>
-            </Card>
+                <div className="text-sm text-muted-foreground">Active Users</div>
+                <div className="h-1 bg-primary/20 rounded-full mt-2">
+                  <div className="h-full bg-primary rounded-full w-3/4 transition-all duration-1000" />
+                </div>
+              </div>
+              
+              <div className="text-center">
+                <div className="text-3xl lg:text-4xl font-bold text-accent mb-2">
+                  {animatedStats.totalRooms.toLocaleString()}
+                </div>
+                <div className="text-sm text-muted-foreground">Active Rooms</div>
+                <div className="h-1 bg-accent/20 rounded-full mt-2">
+                  <div className="h-full bg-accent rounded-full w-2/3 transition-all duration-1000" />
+                </div>
+              </div>
+              
+              <div className="text-center">
+                <div className="text-3xl lg:text-4xl font-bold text-green-500 mb-2">
+                  {animatedStats.messagesSent.toLocaleString()}
+                </div>
+                <div className="text-sm text-muted-foreground">Messages Today</div>
+                <div className="h-1 bg-green-500/20 rounded-full mt-2">
+                  <div className="h-full bg-green-500 rounded-full w-5/6 transition-all duration-1000" />
+                </div>
+              </div>
+              
+              <div className="text-center">
+                <div className="text-3xl lg:text-4xl font-bold text-blue-500 mb-2">
+                  {animatedStats.filesShared.toLocaleString()}
+                </div>
+                <div className="text-sm text-muted-foreground">Files Shared</div>
+                <div className="h-1 bg-blue-500/20 rounded-full mt-2">
+                  <div className="h-full bg-blue-500 rounded-full w-1/2 transition-all duration-1000" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-8 border-t border-border bg-background/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="text-sm text-muted-foreground">
-              © 2024 SecureChat. No logs, no trace, no compromises.
+      {/* Features Section */}
+      <section className="py-20 relative">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <img
+            src="https://images.pexels.com/photos/1089438/pexels-photo-1089438.jpeg?auto=compress&cs=tinysrgb&w=1920"
+            alt="Matrix code background"
+            className="w-full h-full object-cover"
+          />
+        </div>
+
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl lg:text-4xl font-bold mb-6">
+                Enterprise-Grade Security Features
+              </h2>
+              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                Built with the latest cryptographic standards and privacy-preserving technologies
+              </p>
             </div>
-            <div className="flex gap-6 mt-4 md:mt-0">
-              <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                Privacy Policy
-              </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                How It Works
-              </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                FAQ
-              </a>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {features.map((feature, index) => {
+                // Feature images for visual enhancement
+                const featureImages = [
+                  "https://images.pexels.com/photos/5475786/pexels-photo-5475786.jpeg?auto=compress&cs=tinysrgb&w=800", // Military-Grade Encryption
+                  "https://images.pexels.com/photos/9783812/pexels-photo-9783812.jpeg?auto=compress&cs=tinysrgb&w=800", // Self-Destructing Messages
+                  "https://images.pexels.com/photos/24347621/pexels-photo-24347621.jpeg?auto=compress&cs=tinysrgb&w=800", // Encrypted Video Calls
+                  "https://images.pexels.com/photos/8371715/pexels-photo-8371715.jpeg?auto=compress&cs=tinysrgb&w=800" // Secure File Sharing
+                ];
+
+                return (
+                <Card key={index} className="group hover:shadow-lg transition-all duration-300 border-border/50 overflow-hidden">
+                  {/* Feature Image Header */}
+                  <div className="relative h-48 overflow-hidden">
+                    <img
+                      src={featureImages[index]}
+                      alt={`${feature.title} illustration`}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-card/90 to-transparent" />
+                    <div className="absolute bottom-4 left-4">
+                      <div className="p-3 bg-primary/20 backdrop-blur-sm rounded-lg">
+                        <feature.icon className="h-8 w-8 text-primary" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <CardContent className="p-6">
+                    <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
+                    <p className="text-muted-foreground mb-4 leading-relaxed">{feature.description}</p>
+                    <Badge variant="secondary" className="bg-accent/10 text-accent">
+                      {feature.stats}
+                    </Badge>
+                  </CardContent>
+                </Card>
+                );
+              })}
             </div>
           </div>
         </div>
-      </footer>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-gradient-to-br from-primary/10 to-accent/10 relative overflow-hidden">
+        {/* CTA Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.pexels.com/photos/9783812/pexels-photo-9783812.jpeg?auto=compress&cs=tinysrgb&w=1920"
+            alt="Secure communication background"
+            className="w-full h-full object-cover opacity-10"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20" />
+        </div>
+
+        <div className="container mx-auto px-4 text-center relative z-10">
+          <div className="max-w-3xl mx-auto space-y-8">
+            <h2 className="text-3xl lg:text-4xl font-bold">
+              Ready to Start Secure Communication?
+            </h2>
+            <p className="text-xl text-muted-foreground">
+              Join thousands of users who trust SecureChat for their private communications
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                size="lg" 
+                className="px-8"
+                onClick={() => isAuthenticated ? navigate('/create') : setShowNicknameDialog(true)}
+              >
+                <Lock className="h-5 w-5 mr-2" />
+                Create Secure Room
+              </Button>
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="px-8"
+                onClick={() => navigate('/features')}
+              >
+                Learn More
+                <ArrowRight className="h-5 w-5 ml-2" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Nickname Dialog */}
+      <Dialog open={showNicknameDialog} onOpenChange={setShowNicknameDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Anonymous Session</DialogTitle>
+            <DialogDescription>
+              Choose a nickname to start your secure, anonymous session. No personal information required.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              placeholder="Enter your nickname"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleCreateAnonymousSession()}
+              maxLength={50}
+            />
+            <p className="text-sm text-muted-foreground">
+              Your nickname is only used for this session and is not stored permanently.
+            </p>
+            <div className="flex gap-2">
+              <Button 
+                onClick={handleCreateAnonymousSession}
+                disabled={!nickname.trim() || isLoading}
+                className="flex-1"
+              >
+                {isLoading ? (
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                ) : null}
+                Start Session
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowNicknameDialog(false)}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Password Dialog */}
+      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Room Password Required</DialogTitle>
+            <DialogDescription>
+              This room requires a password to join. Enter the password provided by the room creator.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              type="password"
+              placeholder="Enter room password"
+              value={roomPassword}
+              onChange={(e) => setRoomPassword(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handlePasswordSubmit()}
+            />
+            <div className="flex gap-2">
+              <Button 
+                onClick={handlePasswordSubmit}
+                disabled={!roomPassword.trim() || isJoining}
+                className="flex-1"
+              >
+                {isJoining ? (
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                ) : null}
+                Join Room
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowPasswordDialog(false);
+                  setRoomPassword('');
+                  setPendingRoomCode('');
+                }}
+                disabled={isJoining}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
