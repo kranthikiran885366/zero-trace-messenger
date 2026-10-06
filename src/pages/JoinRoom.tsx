@@ -76,7 +76,7 @@ const JoinRoom = () => {
             variant="outline"
             size="lg"
             onClick={() => navigate('/')}
-            className="bg-primary/10 border-primary/50 hover:bg-primary/20 hover:border-primary/70 text-primary transition-all duration-300 shadow-lg shadow-primary/20"
+            className="bg-primary/10 border-primary/40 text-primary hover:bg-primary/15 hover:border-primary/60 hover:text-primary transition-all duration-300 shadow-lg shadow-primary/10"
           >
             <ArrowLeft className="h-5 w-5 mr-2" />
             BACK TO HOME
@@ -86,7 +86,7 @@ const JoinRoom = () => {
             variant="outline"
             size="lg"
             onClick={() => navigate('/create')}
-            className="bg-accent/10 border-accent/50 hover:bg-accent/20 hover:border-accent/70 text-accent transition-all duration-300 shadow-lg shadow-accent/20"
+            className="bg-accent/10 border-accent/40 text-accent hover:bg-accent/15 hover:border-accent/60 hover:text-accent transition-all duration-300 shadow-lg shadow-accent/10"
           >
             <Lock className="h-5 w-5 mr-2" />
             CREATE ROOM
