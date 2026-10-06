@@ -90,6 +90,15 @@ All colors MUST be HSL.
     transition-timing-function: ease-out;
   }
 
+  :focus-visible {
+    outline: 3px solid hsl(var(--ring) / 0.35);
+    outline-offset: 2px;
+  }
+
+  ::placeholder {
+    color: hsl(var(--muted-foreground) / 0.72);
+  }
+
   /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 8px;

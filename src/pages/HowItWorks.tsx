@@ -60,7 +60,7 @@ const HowItWorks = () => {
       <Navigation />
 
       {/* Back Button Header */}
-      <div className="container mx-auto px-4 pt-6">
+      <div className="container mx-auto px-4 pt-24 lg:pt-28">
         <div className="flex items-center gap-4 mb-6">
           <Button
             variant="outline"
