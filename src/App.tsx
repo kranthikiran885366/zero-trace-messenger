@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ChatProvider } from '@/contexts/ChatContext';
@@ -51,6 +51,24 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   }
 
   return <>{children}</>;
+};
+
+const DocumentTitle: React.FC = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    const labels: Record<string, string> = {
+      '/': 'SecureChat | Private by design',
+      '/how-it-works': 'How it works | SecureChat',
+      '/features': 'Features | SecureChat',
+      '/join': 'Join a secure room | SecureChat',
+      '/files': 'Encrypted files | SecureChat',
+      '/settings': 'Settings | SecureChat',
+    };
+    document.title = labels[location.pathname] ?? 'SecureChat | Private by design';
+  }, [location.pathname]);
+
+  return null;
 };
 
 // App routes component
@@ -237,6 +255,7 @@ const App: React.FC = () => {
     <Router>
       <AuthProvider>
         <div className="min-h-screen bg-background text-foreground">
+          <DocumentTitle />
           <EnvironmentChecker />
           <AppRoutes />
           <Toaster />

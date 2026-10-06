@@ -12,6 +12,7 @@ export interface ChatMessage {
     filename?: string;
     fileSize?: number;
     mimeType?: string;
+    encryptedData?: string;
   };
 }
 
@@ -174,12 +175,19 @@ export class WebSocketService {
       throw new Error('File too large. Maximum size is 50MB.');
     }
 
-    // Simulate file upload and encryption
-    const content = `File: ${file.name}`;
-    await this.sendMessage(content, 'file', {
+    const fileBytes = new Uint8Array(await file.arrayBuffer());
+    let binary = '';
+    for (let index = 0; index < fileBytes.length; index += 0x8000) {
+      binary += String.fromCharCode(...fileBytes.subarray(index, index + 0x8000));
+    }
+    const encodedFile = btoa(binary);
+    const encryptedData = await encryption.encryptMessage(encodedFile, this.encryptionKey ?? '');
+
+    await this.sendMessage('[Encrypted file attachment]', 'file', {
       filename: file.name,
       fileSize: file.size,
-      mimeType: file.type
+      mimeType: file.type,
+      encryptedData,
     });
   }
 

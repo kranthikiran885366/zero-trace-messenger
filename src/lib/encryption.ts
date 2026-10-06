@@ -26,20 +26,68 @@ export class EncryptionService {
     return result;
   }
 
-  // Encrypt message content
+  private decodeBase64(value: string): Uint8Array {
+    return Uint8Array.from(atob(value), (character) => character.charCodeAt(0));
+  }
+
+  private encodeBase64(value: Uint8Array): string {
+    let binary = '';
+    const chunkSize = 0x8000;
+    for (let index = 0; index < value.length; index += chunkSize) {
+      binary += String.fromCharCode(...value.subarray(index, index + chunkSize));
+    }
+    return btoa(binary);
+  }
+
+  private async deriveKey(key: string): Promise<CryptoKey> {
+    const material = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(key),
+      'PBKDF2',
+      false,
+      ['deriveKey'],
+    );
+
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: new TextEncoder().encode('securechat-room-key-v1'), iterations: 100000, hash: 'SHA-256' },
+      material,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['encrypt', 'decrypt'],
+    );
+  }
+
   async encryptMessage(content: string, key: string): Promise<string> {
     try {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(content);
-      
-      // In a real implementation, this would use actual AES-256-GCM encryption
-      // For demo purposes, we'll use base64 encoding with a key prefix
-      const encrypted = btoa(key.slice(0, 8) + content);
-      return encrypted;
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const cryptoKey = await this.deriveKey(key);
+      const ciphertext = await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv },
+        cryptoKey,
+        new TextEncoder().encode(content),
+      );
+      return `${this.encodeBase64(iv)}.${this.encodeBase64(new Uint8Array(ciphertext))}`;
     } catch (error) {
       console.error('Encryption failed:', error);
       throw new Error('Failed to encrypt message');
     }
+  }
+
+  async decryptMessage(encryptedContent: string, key: string): Promise<string> {
+    try {
+      const [encodedIv, encodedCiphertext] = encryptedContent.split('.');
+      if (!encodedIv || !encodedCiphertext) throw new Error('Invalid encrypted payload');
+      const plaintext = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: this.decodeBase64(encodedIv) },
+        await this.deriveKey(key),
+        this.decodeBase64(encodedCiphertext),
+      );
+      return new TextDecoder().decode(plaintext);
+    } catch (error) {
+      console.error('Decryption failed:', error);
+      throw new Error('Failed to decrypt message');
+    }
+  }
   }
 
   // Decrypt message content

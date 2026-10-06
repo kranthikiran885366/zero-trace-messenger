@@ -138,7 +138,7 @@ const Navigation = () => {
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      scrolled ? 'bg-background/95 backdrop-blur-md border-b border-border/50' : 'bg-transparent'
+      scrolled ? 'bg-background/95 backdrop-blur-md border-b border-border/60 shadow-sm' : 'bg-background/90 backdrop-blur-md border-b border-border/40'
     }`}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 lg:h-20">
@@ -311,7 +311,7 @@ const Navigation = () => {
           <div className="lg:hidden border-t border-border/50 bg-background/95 backdrop-blur-md">
             <div className="px-2 pt-2 pb-3 space-y-1">
               {navItems.map((item) => {
-                const isActive = location.pathname === item.href;
+                  const isActive = item.href === '/' ? location.pathname === '/' : location.pathname.startsWith(item.href);
                 return (
                   <Link
                     key={item.name}
