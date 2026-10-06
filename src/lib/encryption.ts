@@ -88,26 +88,6 @@ export class EncryptionService {
       throw new Error('Failed to decrypt message');
     }
   }
-  }
-
-  // Decrypt message content
-  async decryptMessage(encryptedContent: string, key: string): Promise<string> {
-    try {
-      // In a real implementation, this would use actual AES-256-GCM decryption
-      // For demo purposes, we'll decode and verify the key prefix
-      const decoded = atob(encryptedContent);
-      const keyPrefix = key.slice(0, 8);
-      
-      if (!decoded.startsWith(keyPrefix)) {
-        throw new Error('Invalid key');
-      }
-      
-      return decoded.slice(8);
-    } catch (error) {
-      console.error('Decryption failed:', error);
-      throw new Error('Failed to decrypt message');
-    }
-  }
 
   // Generate encryption fingerprint
   generateFingerprint(key: string): string {
